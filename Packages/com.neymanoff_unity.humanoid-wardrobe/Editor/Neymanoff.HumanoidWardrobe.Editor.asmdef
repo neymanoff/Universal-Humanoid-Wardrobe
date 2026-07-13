@@ -1,0 +1,10 @@
+{
+    "name": "Neymanoff.HumanoidWardrobe.Editor",
+    "references": [
+      "Neymanoff.HumanoidWardrobe"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
