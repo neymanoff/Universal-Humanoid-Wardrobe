@@ -77,7 +77,7 @@ namespace Neymanoff.HumanoidWardrobe
         }
 
         /// <summary>
-        /// Cleans up the  duplicate skeleton hierarchy instantiated with the prefab to save preformance.
+        /// Cleans up the  duplicate skeleton hierarchy instantiated with the prefab to save performance.
         /// </summary>
         private void CleanupDuplicateSkeleton()
         {
