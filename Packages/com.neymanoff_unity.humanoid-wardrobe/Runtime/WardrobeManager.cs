@@ -32,6 +32,17 @@ namespace Neymanoff.HumanoidWardrobe
     [AddComponentMenu("Humanoid Wardrobe/WardrobeManager")]
     public class WardrobeManager : MonoBehaviour
     {
+        [System.Serializable]
+        public struct DefaultEquipment
+        {
+            public EquipmentSlot slot;
+            public GameObject prefab;
+        }
+        
+        [Header("Default Loadout")]
+        [Tooltip("Items equipped automatically when the game starts.")]
+        public List<DefaultEquipment> defaultLoadout = new();
+        
         private Animator _animator;
 
         private readonly Dictionary<EquipmentSlot, GameObject> _equipmentItems = new ();
@@ -45,6 +56,17 @@ namespace Neymanoff.HumanoidWardrobe
             if (_animator.avatar == null || !_animator.isHuman)
             {
                 Debug.LogWarning($"[Wardrobe Manager]: Animator on {gameObject.name} is not set up as Humanoid! Attachment system might fail.");
+            }
+        }
+
+        private void Start()
+        {
+            foreach (var item in defaultLoadout)
+            {
+                if (item.prefab != null)
+                {
+                    Equip(item.slot, item.prefab);
+                }
             }
         }
 
@@ -102,8 +124,16 @@ namespace Neymanoff.HumanoidWardrobe
             if (!_equipmentItems.TryGetValue(slot, out var item)) return;
             if (item != null)
             {
-                Destroy(item);
+                if (Application.isPlaying)
+                {
+                    Destroy(item);
+                }
+                else
+                {
+                    DestroyImmediate(item);
+                }
             }
+            
             _equipmentItems.Remove(slot);
             OnEquipmentChanged?.Invoke(slot, null);
         }
