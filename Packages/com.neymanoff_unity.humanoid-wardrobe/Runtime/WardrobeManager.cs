@@ -70,6 +70,37 @@ namespace Neymanoff.HumanoidWardrobe
             }
         }
 
+        ///<summary>
+        /// Equips a WardrobeItemSO into a target slot with automatic rule checking
+        /// (e.g. 2H weapons auto-unequipping OffHand, rings swapping, etc.)
+        /// </summary>
+        public GameObject EquipItemSO(WardrobeItemSO itemSO, EquipmentSlot requestedSlot)
+        {
+            if (itemSO == null || itemSO.ItemPrefab == null) return null;
+
+            if (!itemSO.CanFitInSlot(requestedSlot))
+            {
+                Debug.LogWarning($"[WardrobeManager] Item '{itemSO.ItemPrefab.name}' cannot be equipped into slot {requestedSlot}!");
+                return null;
+            }
+            
+            if (itemSO.Restriction == ItemSlotRestriction.TwoHanded)
+            {
+                Unequip(EquipmentSlot.OffHand);
+            }
+
+            if (requestedSlot == EquipmentSlot.OffHand)
+            {
+                GameObject mainHandObj = GetEquippedItem(EquipmentSlot.MainHand);
+                if (mainHandObj != null && mainHandObj.name.Contains("TwoHanded"))
+                {
+                    Unequip(EquipmentSlot.MainHand);
+                }
+            }
+            
+            return Equip(requestedSlot, itemSO.ItemPrefab);
+        }
+        
         /// <summary>
         /// Instantiates a prefab and equips it to the specified slot.
         /// Automatically handles both skinned clothing and static attachments.
@@ -92,6 +123,10 @@ namespace Neymanoff.HumanoidWardrobe
             }
             else if (spawnedInstance.TryGetComponent<HumanoidAttachmentPoint>(out var attachment))
             {
+                HumanBodyBones targetBone = attachment.UseCustomBone 
+                    ? attachment.TargetBone 
+                    : GetDefaultBoneForSlot(slot);
+                
                 Transform boneTransform = _animator.GetBoneTransform(attachment.TargetBone);
                 if (boneTransform != null)
                 {
@@ -157,6 +192,23 @@ namespace Neymanoff.HumanoidWardrobe
         {
             _equipmentItems.TryGetValue(slot, out var item);
             return item;
+        }
+        
+        public static HumanBodyBones GetDefaultBoneForSlot(EquipmentSlot slot)
+        {
+            return slot switch
+            {
+                EquipmentSlot.Head => HumanBodyBones.Head,
+                EquipmentSlot.Neck => HumanBodyBones.Neck,
+                EquipmentSlot.Chest => HumanBodyBones.Chest,
+                EquipmentSlot.Shoulders => HumanBodyBones.Chest,
+                EquipmentSlot.Back => HumanBodyBones.Chest,
+                EquipmentSlot.MainHand => HumanBodyBones.RightHand,
+                EquipmentSlot.OffHand => HumanBodyBones.LeftHand,
+                EquipmentSlot.LeftRing => HumanBodyBones.LeftRingProximal,
+                EquipmentSlot.RightRing => HumanBodyBones.RightRingProximal,
+                _ => HumanBodyBones.Hips
+            };
         }
     }
 }
