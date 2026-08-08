@@ -44,8 +44,8 @@ namespace Neymanoff.HumanoidWardrobe
         public List<DefaultEquipment> defaultLoadout = new();
         
         private Animator _animator;
-
         private readonly Dictionary<EquipmentSlot, GameObject> _equipmentItems = new ();
+        private readonly Dictionary<EquipmentSlot, WardrobeItemSO> _equipmentItemData = new();
         
         public event Action<EquipmentSlot, GameObject> OnEquipmentChanged;
 
@@ -91,14 +91,20 @@ namespace Neymanoff.HumanoidWardrobe
 
             if (requestedSlot == EquipmentSlot.OffHand)
             {
-                GameObject mainHandObj = GetEquippedItem(EquipmentSlot.MainHand);
-                if (mainHandObj != null && mainHandObj.name.Contains("TwoHanded"))
+                if (_equipmentItemData.TryGetValue(EquipmentSlot.MainHand, out var mainItem) 
+                    && mainItem != null
+                    && mainItem.Restriction == ItemSlotRestriction.TwoHanded)
                 {
                     Unequip(EquipmentSlot.MainHand);
                 }
             }
             
-            return Equip(requestedSlot, itemSO.ItemPrefab);
+            GameObject instance = Equip(requestedSlot, itemSO.ItemPrefab);
+            if (instance != null)
+            {
+                _equipmentItemData[requestedSlot] = itemSO;
+            }
+            return instance;
         }
         
         /// <summary>
@@ -127,15 +133,16 @@ namespace Neymanoff.HumanoidWardrobe
                     ? attachment.TargetBone 
                     : GetDefaultBoneForSlot(slot);
                 
-                Transform boneTransform = _animator.GetBoneTransform(attachment.TargetBone);
+                Transform boneTransform = _animator.GetBoneTransform(targetBone);
                 if (boneTransform != null)
                 {
                     spawnedInstance.transform.SetParent(boneTransform, false);
-                    attachment.ApplyOffsets();
+                    bool isLeftSlot = (slot == EquipmentSlot.OffHand || slot == EquipmentSlot.LeftRing);
+                    attachment.ApplyOffsets(isLeftSlot);
                 }
                 else
                 {
-                    Debug.LogError($"[WardrobeManager] Bone {attachment.TargetBone} not found on character {gameObject.name}!");
+                    Debug.LogError($"[WardrobeManager] Bone {attachment.TargetBone} for slot {slot} not found on character {gameObject.name}!");
                     Destroy(spawnedInstance);
                     return null;
                 }
@@ -156,20 +163,22 @@ namespace Neymanoff.HumanoidWardrobe
         /// <param name="slot">The slot to clear.</param>
         public void Unequip(EquipmentSlot slot)
         {
-            if (!_equipmentItems.TryGetValue(slot, out var item)) return;
-            if (item != null)
+            if (_equipmentItems.TryGetValue(slot, out var item))
             {
-                if (Application.isPlaying)
+                if (item != null)
                 {
-                    Destroy(item);
+                    if (Application.isPlaying)
+                    {
+                        Destroy(item);
+                    }
+                    else
+                    {
+                        DestroyImmediate(item);
+                    }
                 }
-                else
-                {
-                    DestroyImmediate(item);
-                }
+                _equipmentItems.Remove(slot);
             }
-            
-            _equipmentItems.Remove(slot);
+            _equipmentItemData.Remove(slot);
             OnEquipmentChanged?.Invoke(slot, null);
         }
 
