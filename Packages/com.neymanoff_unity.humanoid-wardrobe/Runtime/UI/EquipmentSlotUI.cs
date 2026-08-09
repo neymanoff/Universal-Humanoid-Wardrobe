@@ -20,7 +20,7 @@ namespace Neymanoff.HumanoidWardrobe.UI
         [SerializeField] public Image itemIconImage;
         
         [Tooltip("Image component displaying the neutral silhouette placeholder when slot is empty")]
-        [SerializeField] public Image placeholderSilhouetteImage;
+        [SerializeField] public Image silhouetteImage;
         
         private WardrobeManager _wardrobeManager;
         private WardrobeItemSO _currentItem;
@@ -77,9 +77,9 @@ namespace Neymanoff.HumanoidWardrobe.UI
                     itemIconImage.enabled = true;
                 }
 
-                if (placeholderSilhouetteImage != null)
+                if (silhouetteImage != null)
                 {
-                    placeholderSilhouetteImage.enabled = false;
+                    silhouetteImage.enabled = false;
                 }
             }
             else
@@ -89,9 +89,9 @@ namespace Neymanoff.HumanoidWardrobe.UI
                     itemIconImage.enabled = false;    
                 }
 
-                if (placeholderSilhouetteImage != null)
+                if (silhouetteImage != null)
                 {
-                    placeholderSilhouetteImage.enabled = true;
+                    silhouetteImage.enabled = true;
                 }
             }
         }

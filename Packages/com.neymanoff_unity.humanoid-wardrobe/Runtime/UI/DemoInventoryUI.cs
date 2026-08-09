@@ -12,8 +12,9 @@ namespace Neymanoff.HumanoidWardrobe.UI
     [DisallowMultipleComponent]
     public class DemoInventoryUI : MonoBehaviour
     {
-        [Header("Target Character")] [Tooltip("The character's WardrobeManager to equip items on")] [SerializeField]
-        private WardrobeManager wardrobeManager;
+        [Header("Target Character")] 
+        [Tooltip("The character's WardrobeManager to equip items on")] 
+        [SerializeField] private WardrobeManager wardrobeManager;
         
         [Header("Available Items Database")]
         [Tooltip("List of item ScriptableObjects to display in the inventory grid")]
@@ -23,28 +24,28 @@ namespace Neymanoff.HumanoidWardrobe.UI
         [Tooltip("Container Transform with a GridLayoutGroup for inventory buttons.")]
         [SerializeField] private Transform inventoryGridContainer;
 
-        [Tooltip("Button prefab instantiated for each item in the grid.")] [SerializeField]
-        private GameObject inventoryItemButtonPrefab;
+        [Tooltip("Button prefab instantiated for each item in the grid.")] 
+        [SerializeField] private GameObject inventoryItemButtonPrefab;
         
         [Header("Paper-doll Slots")]
         [Tooltip("List of equipment slots on the character paper-doll")]
-        [SerializeField] private List<EquipmentSlotUI> paperDollSlots = new();
+        [SerializeField] private List<EquipmentSlotUI> equipmentSlots = new();
 
         [Obsolete("Obsolete")]
         private void Start()
         {
-            if (wardrobeManager == null)
-            {
-                wardrobeManager = FindFirstObjectByType<WardrobeManager>();
-            }
-
-            InitPaperDoll();
-            PopulateInventoryGrid();
+           InitSlots();
+           PopulateInventoryGrid();
         }
 
-        private void InitPaperDoll()
+        private void InitSlots()
         {
-            foreach (var slotUI in paperDollSlots)
+            if (wardrobeManager == null)
+            {
+                Debug.LogWarning("[DemoInventoryUI] WardrobeManager is not assigned in the Inspector");
+                return;
+            }
+            foreach (var slotUI in equipmentSlots)
             {
                 if (slotUI != null)
                 {
@@ -56,6 +57,11 @@ namespace Neymanoff.HumanoidWardrobe.UI
         private void PopulateInventoryGrid()
         {
             if (inventoryGridContainer == null || inventoryItemButtonPrefab == null) return;
+
+            foreach (Transform child in inventoryGridContainer)
+            {
+                Destroy(child.gameObject);
+            }
 
             foreach (var itemSO in availableItems)
             {
@@ -86,7 +92,7 @@ namespace Neymanoff.HumanoidWardrobe.UI
 
             if (equippedObj != null)
             {
-                EquipmentSlotUI targetSlotUI = paperDollSlots.Find(s => s.SlotType == itemSO.TargetSlot);
+                EquipmentSlotUI targetSlotUI = equipmentSlots.Find(s => s.SlotType == itemSO.TargetSlot);
                 if (targetSlotUI != null)
                 {
                     targetSlotUI.SetEquipmentItem(itemSO);
