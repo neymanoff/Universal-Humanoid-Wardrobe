@@ -30,8 +30,7 @@ namespace Neymanoff.HumanoidWardrobe.UI
         [Header("Paper-doll Slots")]
         [Tooltip("List of equipment slots on the character paper-doll")]
         [SerializeField] private List<EquipmentSlotUI> equipmentSlots = new();
-
-        [Obsolete("Obsolete")]
+        
         private void Start()
         {
            InitSlots();
