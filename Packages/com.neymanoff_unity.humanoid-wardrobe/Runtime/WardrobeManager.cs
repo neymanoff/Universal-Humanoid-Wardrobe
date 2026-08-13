@@ -22,7 +22,7 @@ namespace Neymanoff.HumanoidWardrobe
         LeftRing,
         RightRing,
     }
-    
+
     /// <summary>
     /// Central manager placed on character to handle equipping,
     /// remapping, and unequipping items in different slots. 
@@ -38,15 +38,14 @@ namespace Neymanoff.HumanoidWardrobe
             public EquipmentSlot slot;
             public GameObject prefab;
         }
-        
-        [Header("Default Loadout")]
-        [Tooltip("Items equipped automatically when the game starts.")]
+
+        [Header("Default Loadout")] [Tooltip("Items equipped automatically when the game starts.")]
         public List<DefaultEquipment> defaultLoadout = new();
-        
+
         private Animator _animator;
-        private readonly Dictionary<EquipmentSlot, GameObject> _equipmentItems = new ();
+        private readonly Dictionary<EquipmentSlot, GameObject> _equipmentItems = new();
         private readonly Dictionary<EquipmentSlot, WardrobeItemSO> _equipmentItemData = new();
-        
+
         public event Action<EquipmentSlot, GameObject> OnEquipmentChanged;
 
         private void Awake()
@@ -55,7 +54,8 @@ namespace Neymanoff.HumanoidWardrobe
 
             if (_animator.avatar == null || !_animator.isHuman)
             {
-                Debug.LogWarning($"[Wardrobe Manager]: Animator on {gameObject.name} is not set up as Humanoid! Attachment system might fail.");
+                Debug.LogWarning(
+                    $"[Wardrobe Manager]: Animator on {gameObject.name} is not set up as Humanoid! Attachment system might fail.");
             }
         }
 
@@ -80,10 +80,11 @@ namespace Neymanoff.HumanoidWardrobe
 
             if (!itemSO.CanFitInSlot(requestedSlot))
             {
-                Debug.LogWarning($"[WardrobeManager] Item '{itemSO.ItemPrefab.name}' cannot be equipped into slot {requestedSlot}!");
+                Debug.LogWarning(
+                    $"[WardrobeManager] Item '{itemSO.ItemPrefab.name}' cannot be equipped into slot {requestedSlot}!");
                 return null;
             }
-            
+
             if (itemSO.Restriction == ItemSlotRestriction.TwoHanded)
             {
                 Unequip(EquipmentSlot.OffHand);
@@ -91,48 +92,40 @@ namespace Neymanoff.HumanoidWardrobe
 
             if (requestedSlot == EquipmentSlot.OffHand)
             {
-                if (_equipmentItemData.TryGetValue(EquipmentSlot.MainHand, out var mainItem) 
+                if (_equipmentItemData.TryGetValue(EquipmentSlot.MainHand, out var mainItem)
                     && mainItem != null
                     && mainItem.Restriction == ItemSlotRestriction.TwoHanded)
                 {
                     Unequip(EquipmentSlot.MainHand);
                 }
             }
-            
-            GameObject instance = Equip(requestedSlot, itemSO.ItemPrefab);
-            if (instance != null)
-            {
-                _equipmentItemData[requestedSlot] = itemSO;
-            }
-            return instance;
+
+            return EquipInternal(requestedSlot, itemSO.ItemPrefab, itemSO);
         }
-        
+
         /// <summary>
-        /// Instantiates a prefab and equips it to the specified slot.
-        /// Automatically handles both skinned clothing and static attachments.
+        /// Instantiates a prefab and equips it to the specified slot (without SO metadata).
         /// </summary>
-        /// <param name="slot">Target equipment slot.</param>
-        /// <param name="prefab">The item prefab to spawn.</param>
-        /// <returns>The spawned GameObject instance, or null.</returns>
         public GameObject Equip(EquipmentSlot slot, GameObject prefab)
         {
+            return EquipInternal(slot, prefab, null);
+        }
+
+        private GameObject EquipInternal(EquipmentSlot slot, GameObject prefab, WardrobeItemSO itemSO)
+        {
             Unequip(slot);
-
             if (prefab == null) return null;
-            
-            GameObject spawnedInstance = Instantiate(prefab, transform,  false);
+            GameObject spawnedInstance = Instantiate(prefab, transform, false);
             spawnedInstance.name = $"{prefab.name}_{slot}";
-
             if (spawnedInstance.TryGetComponent<SkinnedMeshRemapper>(out var remapper))
             {
                 remapper.Remap(_animator.transform);
             }
             else if (spawnedInstance.TryGetComponent<HumanoidAttachmentPoint>(out var attachment))
             {
-                HumanBodyBones targetBone = attachment.UseCustomBone 
-                    ? attachment.TargetBone 
+                HumanBodyBones targetBone = attachment.UseCustomBone
+                    ? attachment.TargetBone
                     : GetDefaultBoneForSlot(slot);
-                
                 Transform boneTransform = _animator.GetBoneTransform(targetBone);
                 if (boneTransform != null)
                 {
@@ -142,17 +135,25 @@ namespace Neymanoff.HumanoidWardrobe
                 }
                 else
                 {
-                    Debug.LogError($"[WardrobeManager] Bone {attachment.TargetBone} for slot {slot} not found on character {gameObject.name}!");
+                    Debug.LogError(
+                        $"[WardrobeManager] Bone {targetBone} for slot {slot} not found on character {gameObject.name}!");
                     Destroy(spawnedInstance);
                     return null;
                 }
             }
             else
             {
-                Debug.LogWarning($"[WardrobeManager] Spawned prefab {prefab.name} doesn't have a Remapper or AttachmentPoint. Parented to root.");
+                Debug.LogWarning(
+                    $"[WardrobeManager] Spawned prefab {prefab.name} doesn't have a Remapper or AttachmentPoint. Parented to root.");
             }
-            
-            _equipmentItems[slot] =  spawnedInstance;
+
+            _equipmentItems[slot] = spawnedInstance;
+
+            if (itemSO != null)
+            {
+                _equipmentItemData[slot] = itemSO;
+            }
+
             OnEquipmentChanged?.Invoke(slot, spawnedInstance);
             return spawnedInstance;
         }
@@ -176,8 +177,10 @@ namespace Neymanoff.HumanoidWardrobe
                         DestroyImmediate(item);
                     }
                 }
+
                 _equipmentItems.Remove(slot);
             }
+
             _equipmentItemData.Remove(slot);
             OnEquipmentChanged?.Invoke(slot, null);
         }
@@ -211,7 +214,7 @@ namespace Neymanoff.HumanoidWardrobe
             _equipmentItemData.TryGetValue(slot, out var data);
             return data;
         }
-        
+
         public static HumanBodyBones GetDefaultBoneForSlot(EquipmentSlot slot)
         {
             return slot switch
