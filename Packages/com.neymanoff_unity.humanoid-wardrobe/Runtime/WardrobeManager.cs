@@ -202,6 +202,15 @@ namespace Neymanoff.HumanoidWardrobe
             _equipmentItems.TryGetValue(slot, out var item);
             return item;
         }
+
+        /// <summary>
+        /// Gets the WardrobeItemSO data for the item equipped in the specified slot.
+        /// </summary>
+        public WardrobeItemSO GetEquippedItemData(EquipmentSlot slot)
+        {
+            _equipmentItemData.TryGetValue(slot, out var data);
+            return data;
+        }
         
         public static HumanBodyBones GetDefaultBoneForSlot(EquipmentSlot slot)
         {
