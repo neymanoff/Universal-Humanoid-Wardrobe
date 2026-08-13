@@ -513,10 +513,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.UI.DemoInventoryUI
   wardrobeManager: {fileID: 5384059536661945531}
-  availableItems: []
+  availableItems:
+  - {fileID: 11400000, guid: 84de116ba60974e45b87d69ef94befd3, type: 2}
+  - {fileID: 11400000, guid: 84de116ba60974e45b87d69ef94befd3, type: 2}
+  - {fileID: 11400000, guid: fb152cc4685a28b4c99844c6bbe3dca9, type: 2}
+  - {fileID: 11400000, guid: fb152cc4685a28b4c99844c6bbe3dca9, type: 2}
+  - {fileID: 11400000, guid: e12ac8ffaaf6c9d4c8f53a326ca4710e, type: 2}
+  - {fileID: 11400000, guid: 6a81ca44d34a51a46ba76f4a27c32af5, type: 2}
+  - {fileID: 11400000, guid: 237437fe350acd74d99145e6226e2d04, type: 2}
+  - {fileID: 11400000, guid: cf4977e5689ee1e4d9ae2f40aca75dd6, type: 2}
   inventoryGridContainer: {fileID: 1243793829}
-  inventoryItemButtonPrefab: {fileID: 6255436372267556825, guid: dc8f9c795132dbc4aa60fe57fecc47b4, type: 3}
-  equipmentSlots: []
+  inventoryItemButtonPrefab: {fileID: 6450718736690836107, guid: dc8f9c795132dbc4aa60fe57fecc47b4, type: 3}
+  equipmentSlots:
+  - {fileID: 1902835038}
+  - {fileID: 1862476213}
+  - {fileID: 903995283}
+  - {fileID: 1675565401}
+  - {fileID: 709269049}
+  - {fileID: 213569606}
+  - {fileID: 330873351}
+  - {fileID: 2005392102}
+  - {fileID: 167114241}
+  - {fileID: 74677719}
+  - {fileID: 1886553400}
+  - {fileID: 995670663}
 --- !u!4 &367469731
 Transform:
   m_ObjectHideFlags: 0
@@ -854,7 +874,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f4182737f92ef81478b9757711291aa7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b2c3d4e5f60718293a4b5c6d7e8f90a1, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1862,7 +1882,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f4182737f92ef81478b9757711291aa7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1894,7 +1914,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.UI.EquipmentSlotUI
   slotType: 7
   itemIconImage: {fileID: 0}
-  silhouetteImage: {fileID: 0}
+  silhouetteImage: {fileID: 2005392100}
 --- !u!1001 &5384059536661945528
 PrefabInstance:
   m_ObjectHideFlags: 0

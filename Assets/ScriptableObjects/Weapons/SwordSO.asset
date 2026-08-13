@@ -15,5 +15,5 @@ MonoBehaviour:
   itemName: Sword
   restriction: 1
   targetSlot: 8
-  icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: 77a57e549ed68d64193c7fa669540d21, type: 3}
   itemPrefab: {fileID: 8452711709976487609, guid: e8faa219e0250fd48afd115a058ea5e5, type: 3}

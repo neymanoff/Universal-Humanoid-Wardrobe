@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b87dfa9ab1e40e24598dd7cfbe8f4658, type: 3}
   m_Name: WoodShiledSO
   m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.WardrobeItemSO
-  itemName: New Item
+  itemName: Wood Shiled
   restriction: 0
-  targetSlot: 0
-  icon: {fileID: 0}
-  itemPrefab: {fileID: 0}
+  targetSlot: 9
+  icon: {fileID: 21300000, guid: 695e20960823796479a2a3425407d676, type: 3}
+  itemPrefab: {fileID: 4041390823740680451, guid: d3e7fb783506a2947b5c353b56030f32, type: 3}
