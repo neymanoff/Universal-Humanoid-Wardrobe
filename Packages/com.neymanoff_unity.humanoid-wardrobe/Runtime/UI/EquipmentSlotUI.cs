@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
@@ -6,7 +7,7 @@ namespace Neymanoff.HumanoidWardrobe.UI
 {
     /// <summary>
     /// UI component representing a single equipment slot on the character paper-doll.
-    /// Handles showing placeholder silhouettes, active item icons, and click events to unequip.
+    /// Supports both single-image setup and dual (silhouette + icon) setup.
     /// </summary>
     [DisallowMultipleComponent]
     public class EquipmentSlotUI : MonoBehaviour, IPointerClickHandler
@@ -16,16 +17,29 @@ namespace Neymanoff.HumanoidWardrobe.UI
         [SerializeField] public EquipmentSlot slotType;
         
         [Header("UI References")]
-        [Tooltip("Image component displaying the icon of the currently equipped item.")]
+        [Tooltip("Optional separate image for item icon. If left empty, Silhouette Image will be used for both.")]
         [SerializeField] public Image itemIconImage;
         
-        [Tooltip("Image component displaying the neutral silhouette placeholder when slot is empty")]
+        [Tooltip("Image component displaying the neutral silhouette placeholder.")]
         [SerializeField] public Image silhouetteImage;
         
         private WardrobeManager _wardrobeManager;
         private WardrobeItemSO _currentItem;
+        private Sprite _defaultSilhouetteSprite;
         
         public EquipmentSlot SlotType => slotType;
+
+        private void Awake()
+        {
+            if (silhouetteImage == null)
+            {
+                silhouetteImage = GetComponent<Image>();
+            }
+            else
+            {
+                _defaultSilhouetteSprite = silhouetteImage.sprite;
+            }
+        }
 
         public void Initialize(WardrobeManager manager)
         {
@@ -73,25 +87,24 @@ namespace Neymanoff.HumanoidWardrobe.UI
             {
                 if (itemIconImage != null)
                 {
-                    itemIconImage.sprite = icon;
-                    itemIconImage.enabled = true;
-                }
-
-                if (silhouetteImage != null)
-                {
-                    silhouetteImage.enabled = false;
-                }
-            }
-            else
-            {
-                if (itemIconImage != null)
-                {
-                    itemIconImage.enabled = false;    
-                }
-
-                if (silhouetteImage != null)
+                    if (icon != null)
+                    {
+                        itemIconImage.sprite = icon;
+                        itemIconImage.enabled = true;
+                        if (silhouetteImage != null)
+                            silhouetteImage.enabled = false;
+                    }
+                    else
+                    {
+                        itemIconImage.enabled = false;
+                        if (silhouetteImage != null) 
+                            silhouetteImage.enabled = true;
+                    }
+                } 
+                else if (silhouetteImage != null)
                 {
                     silhouetteImage.enabled = true;
+                    silhouetteImage.sprite = (icon != null) ? icon : _defaultSilhouetteSprite;
                 }
             }
         }
