@@ -105,3 +105,18 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# JetBrains Rider IDE project files
+/[.][Ii]dea/
+
+# Unity Package Manager tarballs
+*.tgz
+*.tgz.meta
+
+# Unity Template Tutorial Files
+/[Aa]ssets/TutorialInfo/
+/[Aa]ssets/TutorialInfo.meta
+
+# macOS system files
+.DS_Store
+.DS_Store.meta

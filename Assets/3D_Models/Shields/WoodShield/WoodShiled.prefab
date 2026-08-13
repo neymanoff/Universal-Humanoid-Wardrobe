@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3806824108064969810
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_Name
+      value: WoodShiled
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3922299676137064945}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 43634deaed77057488112d54b90ff219, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7051497580925679579}
+  m_SourcePrefab: {fileID: 100100000, guid: 43634deaed77057488112d54b90ff219, type: 3}
+--- !u!1 &4041390823740680451 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 43634deaed77057488112d54b90ff219, type: 3}
+  m_PrefabInstance: {fileID: 3806824108064969810}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &3922299676137064945
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4041390823740680451}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.79999995, y: 0.054885942, z: 0.7999999}
+  m_Center: {x: 0.0013682842, y: -0.0072179073, z: -0.004308134}
+--- !u!114 &7051497580925679579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4041390823740680451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d9aab2901bfa994ab11bfdee4164652, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.HumanoidAttachmentPoint
+  useCustomBone: 0
+  targetBone: 17
+  localPosition: {x: 0, y: 0, z: 0}
+  localRotation: {x: 0, y: 0, z: 0}
+  localScale: {x: 1, y: 1, z: 1}
+  autoMirrorForLeftSlot: 1

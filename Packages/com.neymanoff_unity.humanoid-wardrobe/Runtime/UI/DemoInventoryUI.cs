@@ -69,7 +69,8 @@ namespace Neymanoff.HumanoidWardrobe.UI
                 GameObject btnObj = Instantiate(inventoryItemButtonPrefab, inventoryGridContainer);
                 btnObj.name = $"ItemBtn_{itemSO.ItemName}";
                 
-                Image iconImg = btnObj.GetComponentInChildren<Image>();
+                Transform iconTransform = btnObj.transform.Find("ItemIcon");
+                Image iconImg = iconTransform != null ? iconTransform.GetComponent<Image>() : btnObj.GetComponent<Image>();
                 if (iconImg != null && itemSO.Icon != null)
                 {
                     iconImg.sprite = itemSO.Icon;

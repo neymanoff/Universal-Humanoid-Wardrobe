@@ -10,31 +10,31 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.58213
+      value: -1.076
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.78473
+      value: 0.209
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -8.13256
+      value: -7.93
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.7071067
+      value: 0.2588191
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
-      propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.9659258
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -42,7 +42,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -59,6 +59,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: edc138c6f4344bb4abd685b605449270, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8660461309528310871}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: edc138c6f4344bb4abd685b605449270, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 73470979426754072}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: edc138c6f4344bb4abd685b605449270, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6727369966486389950}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: edc138c6f4344bb4abd685b605449270, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8806338895408042852}
   m_SourcePrefab: {fileID: 100100000, guid: edc138c6f4344bb4abd685b605449270, type: 3}
 --- !u!1 &1994719050855826549 stripped
 GameObject:
@@ -84,7 +93,55 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.8645538
-  m_Height: 0.47614217
+  m_Radius: 0.3
+  m_Height: 1.8
   m_Direction: 1
-  m_Center: {x: 0, y: -0.13806687, z: 0.8645538}
+  m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!95 &73470979426754072
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994719050855826549}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: edc138c6f4344bb4abd685b605449270, type: 3}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &6727369966486389950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994719050855826549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3369b9be1a7bca64d85fd2806621f15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.UI.CharacterRotator
+  rotationSpeed: 5
+--- !u!114 &8806338895408042852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994719050855826549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55b3c339f2f543c4a16f6608c1b60fb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.WardrobeManager
+  defaultLoadout: []
