@@ -3,11 +3,10 @@ using UnityEngine;
 namespace Neymanoff.HumanoidWardrobe.UI
 {
     /// <summary>
-    /// Demo animation controller for switching between Fitting Mode (A-Pose)
-    /// and play-mode animations to test item movement and mesh defirms
+    /// Demo animation & pose controller for item fitting.
     /// </summary>
     [DisallowMultipleComponent]
-    public class NewMonoBehaviourScript : MonoBehaviour
+    public class WardrobeDemoAnimationController : MonoBehaviour
     {
         [Header("Target Character")]
         [SerializeField] private Animator characterAnimator;
