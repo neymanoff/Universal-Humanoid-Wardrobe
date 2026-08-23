@@ -267,7 +267,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Idle
+  m_text: 'Play Idle
 
 '
   m_isRightToLeft: 0
@@ -440,75 +440,6 @@ MonoBehaviour:
   slotType: 8
   itemIconImage: {fileID: 0}
   silhouetteImage: {fileID: 167114239}
---- !u!1001 &187188685
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      propertyPath: m_Name
-      value: Dummy
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 542216070}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 542216069}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 542216068}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 542216073}
-  m_SourcePrefab: {fileID: 100100000, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
 --- !u!1 &213569602
 GameObject:
   m_ObjectHideFlags: 0
@@ -774,7 +705,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6187249fcf7c7634ab4d9ad5fbf3fa00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.UI.WardrobeDemoAnimationController
-  characterAnimator: {fileID: 0}
+  characterAnimator: {fileID: 542216073}
   isFittingMode: 0
 --- !u!1 &438922117
 GameObject:
@@ -789,7 +720,7 @@ GameObject:
   - component: {fileID: 438922120}
   - component: {fileID: 438922119}
   m_Layer: 5
-  m_Name: Idle
+  m_Name: PlayIdleButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -858,7 +789,20 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 438922120}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 367469732}
+        m_TargetAssemblyTypeName: Neymanoff.HumanoidWardrobe.UI.WardrobeDemoAnimationController,
+          Neymanoff.HumanoidWardrobe
+        m_MethodName: ToggleFittingMode
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &438922120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -961,82 +905,22 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!1 &542216067 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-  m_PrefabInstance: {fileID: 187188685}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &542216068
+--- !u!114 &542216068 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 9153946044739991126, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+  m_PrefabInstance: {fileID: 1299032697234340014}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 542216067}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 55b3c339f2f543c4a16f6608c1b60fb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.WardrobeManager
-  defaultLoadout: []
---- !u!114 &542216069
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 542216067}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3369b9be1a7bca64d85fd2806621f15e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Neymanoff.HumanoidWardrobe.UI.CharacterRotator
-  rotationSpeed: 5
---- !u!136 &542216070
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 542216067}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.4703231
-  m_Height: 1.8706284
-  m_Direction: 1
-  m_Center: {x: -0.012268543, y: 0.7221582, z: -0.017408371}
---- !u!95 &542216073
+--- !u!95 &542216073 stripped
 Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 7565917456610074270, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+  m_PrefabInstance: {fileID: 1299032697234340014}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 542216067}
-  m_Enabled: 1
-  m_Avatar: {fileID: 9000000, guid: 6ddeb48ecbfab6b4c9c9421c1519ec3d, type: 3}
-  m_Controller: {fileID: 0}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &597756890
 GameObject:
   m_ObjectHideFlags: 0
@@ -1251,7 +1135,7 @@ Transform:
   m_GameObject: {fileID: 645534968}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 1, z: 1.7}
+  m_LocalPosition: {x: -0.82, y: 0.68, z: 2.16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2281,7 +2165,7 @@ GameObject:
   - component: {fileID: 1878582838}
   - component: {fileID: 1878582837}
   m_Layer: 5
-  m_Name: RestPose
+  m_Name: RestPoseButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2350,7 +2234,20 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1878582838}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 367469732}
+        m_TargetAssemblyTypeName: Neymanoff.HumanoidWardrobe.UI.WardrobeDemoAnimationController,
+          Neymanoff.HumanoidWardrobe
+        m_MethodName: ToggleFittingMode
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: Idle
+          m_BoolArgument: 1
+        m_CallState: 2
 --- !u!114 &1878582838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2662,6 +2559,67 @@ MonoBehaviour:
   slotType: 7
   itemIconImage: {fileID: 0}
   silhouetteImage: {fileID: 2005392100}
+--- !u!1001 &1299032697234340014
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602345718913721755, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3411110615327719201, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_Name
+      value: Dummy
+      objectReference: {fileID: 0}
+    - target: {fileID: 7565917456610074270, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 0da702ea59de03f4b9afc53c8216bb7f, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f76f9d39d58a4a74cb76e4e7b50a5ca3, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2670,4 +2628,4 @@ SceneRoots:
   - {fileID: 597756892}
   - {fileID: 1421686476}
   - {fileID: 732040369}
-  - {fileID: 187188685}
+  - {fileID: 1299032697234340014}
