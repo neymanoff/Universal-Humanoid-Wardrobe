@@ -13,10 +13,9 @@ namespace Neymanoff.HumanoidWardrobe
     public class SkinnedMeshRemapper : MonoBehaviour
     {
         /// <summary>
-        /// Remaps all SkinnedMeshRenderers on this GameObject (and its children)
-        /// to use the bone hierarchy of the target skeleton.
+        /// Remaps all SkinnedMeshRenderers in this equipment item to the target character skeleton.
         /// </summary>
-        /// <param name="targetSkeletonRoot"> The root transform of the target character skeleton (usually the Animator's GameObject). </param>
+        /// <param name="targetSkeletonRoot">The root transform of the target character (contains Animator).</param>
         public void Remap(Transform targetSkeletonRoot)
         {
             if (targetSkeletonRoot == null)
@@ -25,6 +24,7 @@ namespace Neymanoff.HumanoidWardrobe
                 return;
             }
             
+            Animator animator = targetSkeletonRoot.GetComponentInChildren<Animator>();
             Dictionary<string, Transform> targetBoneMap =  new Dictionary<string, Transform>();
             BuildBoneMapRecursive(targetSkeletonRoot, targetBoneMap);
             SkinnedMeshRenderer[] clothingRenderers = GetComponentsInChildren<SkinnedMeshRenderer>(true);
@@ -47,17 +47,13 @@ namespace Neymanoff.HumanoidWardrobe
                     {
                         Debug.LogWarning($"[SkinnedMeshRemapper] Target bone '{boneName}' not found in skeleton for {clothingRenderer.name}!");
                         newBones[i] = currentBones[i];
+                        
                     }
                 }
                 
                 clothingRenderer.bones = newBones;
-
-                if (clothingRenderer.rootBone == null) continue;
-                string rootBoneName = clothingRenderer.rootBone.name;
-                if (targetBoneMap.TryGetValue(rootBoneName, out Transform matchingRootBone))
-                {
-                    clothingRenderer.rootBone = matchingRootBone;
-                }
+                
+                clothingRenderer.rootBone = targetSkeletonRoot;
             }
 
             CleanupDuplicateSkeleton();

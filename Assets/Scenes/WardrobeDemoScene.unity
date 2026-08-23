@@ -706,7 +706,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.UI.WardrobeDemoAnimationController
   characterAnimator: {fileID: 542216073}
-  isFittingMode: 0
+  fittingStateName: T_Pose
+  idleStateName: Idle_3
 --- !u!1 &438922117
 GameObject:
   m_ObjectHideFlags: 0
@@ -793,8 +794,8 @@ MonoBehaviour:
       - m_Target: {fileID: 367469732}
         m_TargetAssemblyTypeName: Neymanoff.HumanoidWardrobe.UI.WardrobeDemoAnimationController,
           Neymanoff.HumanoidWardrobe
-        m_MethodName: ToggleFittingMode
-        m_Mode: 6
+        m_MethodName: PlayIdleAnimation
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -2238,8 +2239,8 @@ MonoBehaviour:
       - m_Target: {fileID: 367469732}
         m_TargetAssemblyTypeName: Neymanoff.HumanoidWardrobe.UI.WardrobeDemoAnimationController,
           Neymanoff.HumanoidWardrobe
-        m_MethodName: ToggleFittingMode
-        m_Mode: 6
+        m_MethodName: PlayFittingPose
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
