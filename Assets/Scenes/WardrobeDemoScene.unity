@@ -655,14 +655,13 @@ MonoBehaviour:
   wardrobeManager: {fileID: 542216068}
   availableItems:
   - {fileID: 11400000, guid: 84de116ba60974e45b87d69ef94befd3, type: 2}
-  - {fileID: 11400000, guid: 84de116ba60974e45b87d69ef94befd3, type: 2}
-  - {fileID: 11400000, guid: fb152cc4685a28b4c99844c6bbe3dca9, type: 2}
   - {fileID: 11400000, guid: fb152cc4685a28b4c99844c6bbe3dca9, type: 2}
   - {fileID: 11400000, guid: e12ac8ffaaf6c9d4c8f53a326ca4710e, type: 2}
   - {fileID: 11400000, guid: 6a81ca44d34a51a46ba76f4a27c32af5, type: 2}
   - {fileID: 11400000, guid: 237437fe350acd74d99145e6226e2d04, type: 2}
   - {fileID: 11400000, guid: cf4977e5689ee1e4d9ae2f40aca75dd6, type: 2}
   - {fileID: 11400000, guid: b932c12632d63a14595149e984be037c, type: 2}
+  - {fileID: 11400000, guid: 04c23b8bbcd6ee74fad4fe3a505c58ef, type: 2}
   inventoryGridContainer: {fileID: 1243793829}
   inventoryItemButtonPrefab: {fileID: 6450718736690836107, guid: dc8f9c795132dbc4aa60fe57fecc47b4, type: 3}
   equipmentSlots:

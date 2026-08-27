@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b87dfa9ab1e40e24598dd7cfbe8f4658, type: 3}
+  m_Name: SlavicChestArmorSO
+  m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.WardrobeItemSO
+  itemName: Chest Armor
+  restriction: 0
+  targetSlot: 2
+  icon: {fileID: 21300000, guid: b6fb121791c2ed84e8f7787a7cbf0c82, type: 3}
+  itemPrefab: {fileID: 5053946704369189719, guid: af74c0e89f40dd946903647835b12080, type: 3}
