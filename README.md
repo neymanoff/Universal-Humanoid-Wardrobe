@@ -4,91 +4,76 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Active%20Development-orange.svg)](#)
 
-Модульная, легковесная и производительная система динамической кастомизации экипировки и гардероба для персонажей с Humanoid-ригом в Unity. 
+A modular, lightweight, and high-performance dynamic character customization and equipment wardrobe system for Unity characters rigged with the standard **Humanoid** avatar.
 
-Проект разработан в формате **Unity Package** для бесплатного размещения в **Unity Asset Store** и открытого использования сообществом разработчиков.
-
----
-
-## 📌 Ключевые возможности
-
-* **Два режима экипировки**:
-  1. **Skinned Mesh Remapping**: для мягкой одежды, доспехов, штанов и обуви. Меш одежды автоматически перепривязывается к активному скелету персонажа и повторяет все его движения и анимации.
-  2. **Humanoid Bone Attachment**: для жестких предметов (оружие в руках, шлемы, кольца, щиты, амулеты). Крепится напрямую к соответствующей кости Humanoid с настраиваемыми локальными смещениями (Position / Rotation / Scale) и поддержкой авто-зеркалирования для левой руки / слота.
-* **Изоляция и независимость**: Модуль не привязан жестко к конкретной игре или типу инвентаря.
-* **Контроль ограничений (Slot Restrictions)**: поддержка двуручного оружия (автоматически освобождает слот щита/второго оружия), одноручного оружия, колец и уникальных слотов.
-* **Поддержка предпросмотра в редакторе (Editor Preview)**: возможность увидеть дефолтный сет экипировки в режиме редактирования без запуска Play Mode.
-* **Демо-сцена и интерфейс «Paper-Doll»**: готовый пример UI-куклы персонажа со слотами и сеткой предметов.
+Designed as an official **Unity Package** intended for free release on the **Unity Asset Store** and open-source portfolio presentation.
 
 ---
 
-## 📂 Структура проекта
+## 📌 Key Capabilities
 
-* `Packages/com.neymanoff_unity.humanoid-wardrobe/` — ядро UPM-пакета (готов для экспорта в Asset Store / git-пакет):
-  * `Runtime/` — основные скрипты (`WardrobeManager`, `SkinnedMeshRemapper`, `HumanoidAttachmentPoint`, `WardrobeItemSO`).
-  * `Runtime/UI/` — компоненты демонстрационного интерфейса.
-  * `Editor/` — кастомные инспекторы для Unity Editor.
-  * `Documentation/` — техническая документация пакета.
-  * `Tests/` — юнит- и интеграционные тесты.
-* `Assets/` — проектная тестовая среда:
-  * `3D_Models/` — тестовые модели (Dummy Humanoid, славянский шлем, броня, щиты, оружие).
-  * `ScriptableObjects/` — базы предметов гардероба.
-  * `Scenes/WardrobeDemoScene.unity` — интерактивная сцена тестирования гардероба.
+* **Dual Equipping Modes**:
+  1. **Skinned Mesh Remapping**: For deformable clothing, armor, pants, and boots. Automatically binds clothing renderer bones to the target character skeleton at runtime to faithfully follow all character animations.
+  2. **Humanoid Bone Attachment**: For rigid items (weapons in hand, shields, helmets, rings, necklaces). Parents directly to standard `HumanBodyBones` with customizable local transform offsets and automatic mirroring for off-hand / left-side slots.
+* **Game & Inventory Decoupled**: Operates independently of any specific inventory model, weight system, or stat calculation framework.
+* **Slot Restriction Rules**: Built-in support for Two-Handed weapons (automatically unequipping off-hand items), One-Handed versatility, and ring swaps.
+* **In-Editor Previewing**: Inspect default character loadouts in the Scene View without entering Play Mode.
+* **Turnkey Paper-Doll Demo**: Includes an interactive demo UI featuring paper-doll equipment slots, inventory grid, character turntable rotation, and fitting pose controls.
 
 ---
 
-## 🛠️ Настройка Git и решение проблемы с Git LFS («слетели ассеты»)
+## 📂 Project & Package Structure
 
-Если после клонирования репозитория в Unity не отображаются 3D-модели или текстуры:
+* `Packages/com.neymanoff_unity.humanoid-wardrobe/` — The Core UPM package:
+  * `Runtime/` — Core wardrobe scripts (`WardrobeManager`, `SkinnedMeshRemapper`, `HumanoidAttachmentPoint`, `WardrobeItemSO`).
+  * `Runtime/UI/` — Demo inventory UI and paper-doll slot components.
+  * `Editor/` — Custom Unity Editor inspectors and preview utilities.
+  * `Documentation/` — Package manual and reference docs.
+  * `Tests/` — EditMode and PlayMode test suites.
+* `Assets/` — Development test environment:
+  * `3D_Models/` — Test models (Humanoid Dummy, Slavic helmet, chest armor, shields, weapons).
+  * `ScriptableObjects/` — Equippable wardrobe item database assets.
+  * `Scenes/WardrobeDemoScene.unity` — Interactive demonstration scene.
 
-1. **Причина**: Файлы `.fbx`, `.png`, `.ttf` отслеживаются через **Git LFS**. Если на сервере GitHub хранилище LFS не было загружено (ошибка 404), на диске остаются текстовые заглушки размером 130 байт, а Unity удаляет несинхронизированные `.meta` файлы.
-2. **Как восстановить метафайлы**:
+---
+
+## 📚 Documentation Index
+
+For in-depth guides and technical specifications, explore the project documentation:
+
+* 📐 **[Architecture Specification](docs/ARCHITECTURE.md)**: Full system architecture, UML Class diagrams, sequence diagrams (Mermaid), persistence models, and decoupling patterns.
+* 🛠️ **[Integration & User Guide](docs/INTEGRATION_GUIDE.md)**: Step-by-step developer tutorial covering character setup, item creation, inventory integration, and save/load state.
+* 📋 **[Roadmap & Task Tracker](docs/TODO.md)**: Comprehensive tracking of completed fixes, active tasks, and milestones toward Asset Store publication.
+* 📖 **[Package Technical Manual](Packages/com.neymanoff_unity.humanoid-wardrobe/Documentation/humanoid-wardrobe.md)**: UPM package reference manual.
+
+---
+
+## 🛠️ Git LFS & Asset Recovery Notes
+
+If 3D models or textures appear missing after cloning from GitHub:
+
+1. **Root Cause**: `.fbx`, `.png`, and `.ttf` files are tracked via **Git LFS**. If binary objects were not uploaded to GitHub LFS storage (404 error during clone), Git places 130-byte text pointer files on disk.
+2. **Restoring Meta Files**:
+   All `.meta` files have been restored to preserve model GUIDs and humanoid avatar mappings:
    ```bash
    git checkout -- "*.meta"
    ```
-3. **Как подгрузить бинарные модели**:
-   * Если у вас есть доступ к исходным FBX и PNG файлам с другого компьютера, скопируйте их в соответствующие папки `Assets/3D_Models/...`.
-   * Так как `.meta` файлы уже восстановлены, Unity мгновенно подхватит модели и материалы с сохранением всех ссылок в префабах и сценах!
-
-Подробный разбор причин и архитектурный отчет находится в файле [docs/PROJECT_AUDIT_AND_ROADMAP.md](docs/PROJECT_AUDIT_AND_ROADMAP.md).
+3. **Placing Binary Assets**:
+   Copy your original FBX and PNG files into the respective `Assets/3D_Models/...` directories. Unity will instantly re-bind all materials, prefabs, and scene instances without broken references.
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
-1. Откройте проект в **Unity 6 (6000.5.10f1 или новее)**.
-2. Откройте сцену `Assets/Scenes/WardrobeDemoScene.unity`.
-3. Запустите сцену:
-   * Нажимайте на иконки предметов в нижней сетке инвентаря, чтобы одеть их на персонажа.
-   * Нажимайте на занятые слоты на кукле персонажа, чтобы снять предмет.
-   * Зажимайте левую кнопку мыши на персонаже для кругового вращения (Turntable preview).
-   * Используйте кнопки **Play Fitting Pose (T-Pose)** и **Play Idle** для проверки деформации меша в покое и динамике.
-
----
-
-## 📖 Архитектура и интеграция в игру
-
-### Сохранение надетых предметов между сценами
-* **Способ 1 (`DontDestroyOnLoad`)**: Если персонаж создается/настраивается в гардеробе и затем переносится на игровой уровень, вызовите `DontDestroyOnLoad(characterRoot)`. Все привязанные меши и кости сохраняются автоматически.
-* **Способ 2 (Сериализуемый `WardrobeLoadout`)**: При спавне персонажа из префаба на уровне передайте ему сериализованные данные надетых предметов:
-  ```csharp
-  // Получить текущий сет
-  WardrobeLoadout loadout = wardrobeManager.GetCurrentLoadout();
-  string json = JsonUtility.ToJson(loadout);
-
-  // Применить сет на новом персонаже на уровне
-  wardrobeManager.ApplyLoadout(loadout);
-  ```
-
-### События для связки с инвентарем и характеристиками
-```csharp
-wardrobeManager.OnEquipmentChanged += (slot, itemObj) => 
-{
-    Debug.Log($"В слоте {slot} изменился предмет: {itemObj?.name}");
-};
-```
+1. Open the project in **Unity 6 (6000.5.10f1 or newer)**.
+2. Open `Assets/Scenes/WardrobeDemoScene.unity`.
+3. Press **Play**:
+   * Click items in the bottom inventory grid to equip them.
+   * Click occupied equipment slots on the paper-doll UI to unequip.
+   * Click and drag the left mouse button across the character to rotate preview (Turntable).
+   * Use **Play Fitting Pose (T-Pose)** and **Play Idle** to evaluate mesh deformation across static and animated states.
 
 ---
 
-## 📄 Лицензия
-Распространяется под лицензией MIT. Пакет предназначен для бесплатного использования в коммерческих и некоммерческих играх на Unity.
+## 📄 License
+Released under the [MIT License](LICENSE). Free for commercial and non-commercial Unity projects.
