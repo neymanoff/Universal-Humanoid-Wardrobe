@@ -16,8 +16,8 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 3** | Rig Robustness & Helper/Twist Bone Remapping | 🟡 High | ✅ Completed |
 | **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | ✅ Completed |
 | **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | ✅ Completed |
-| **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | 🔄 Next |
-| **Phase 7** | Asset Store Submission & Showcase Demo Scene | 🔵 Release | 📋 Planned |
+| **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | ✅ Completed |
+| **Phase 7** | Asset Store Submission & Showcase Demo Scene | 🔵 Release | 🔄 Next |
 
 ---
 
@@ -119,24 +119,34 @@ The foundational architectural pillars established to guarantee game-agnostic be
 
 ---
 
-## Phase 6: Comprehensive Automated NUnit Test Suite (🔄 Next)
+## Phase 6: Comprehensive Automated NUnit Test Suite (✅ Completed)
 
 EditMode and PlayMode unit tests covering:
-- [ ] **Rule & Slot Tests**:
-  - [ ] Single-slot equip/unequip.
-  - [ ] Two-handed weapon occupies `MainHand` and `OffHand`.
-  - [ ] Secondary slot unequip clears primary slot atomically.
-  - [ ] Conflicting item replacement behavior.
-- [ ] **Serialization Tests**:
-  - [ ] `WardrobeLoadout` JSON serialization roundtrip fidelity.
-  - [ ] Missing item resolution handling.
-- [ ] **Edge Cases**:
-  - [ ] Missing bone in avatar returns `EquipResultStatus.MissingBone`.
-  - [ ] Null/destroyed prefab handling.
+- [x] **Rule & Slot Tests (`EquipmentRuleResolverTests.cs`)**:
+  - [x] Single-slot equip/unequip validation.
+  - [x] Disallowed slot rejection (`EquipResultStatus.InvalidSlot`).
+  - [x] Missing prefab handling (`EquipResultStatus.MissingPrefab`).
+  - [x] Two-handed weapon occupies `MainHand` and `OffHand`.
+  - [x] Secondary slot unequip clears primary slot atomically.
+  - [x] Conflicting item replacement behavior.
+- [x] **Serialization Tests (`WardrobeLoadoutTests.cs`)**:
+  - [x] `WardrobeLoadout` JSON serialization roundtrip fidelity across multiple slots.
+  - [x] Empty loadout serialization.
+  - [x] Corrupted / null JSON string handling without exceptions.
+- [x] **Result Contract Tests (`EquipResultTests.cs`)**:
+  - [x] Success and failure factory methods with accurate statuses and error messages.
+- [x] **Anti-Clipping Bitmask Tests (`BodyPartMaskTests.cs`)**:
+  - [x] Multi-zone bitwise flags combination and evaluation.
+  - [x] Multi-item additive mask aggregation.
+- [x] **Manager Integration Tests (`WardrobeManagerTests.cs`)**:
+  - [x] Full equip, replace, unequip, and unequip-all lifecycle.
+  - [x] Event emission verification (`OnItemEquipped`, `OnLoadoutChanged`).
+  - [x] Batch rehydration via `ApplyLoadout`.
+  - [x] Modular body sub-mesh hiding and restoring on equip/unequip.
 
 ---
 
-## Phase 7: Asset Store Submission & Showcase Demo Scene (🔵 Release)
+## Phase 7: Asset Store Submission & Showcase Demo Scene (🔄 Next)
 
 - [ ] Interactive showcase scene with character model, apparel switcher, weapon swapping, and loadout preset saving.
 - [ ] XML API documentation across all public classes.

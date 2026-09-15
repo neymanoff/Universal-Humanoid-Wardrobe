@@ -161,5 +161,28 @@ namespace Neymanoff.HumanoidWardrobe
                 _ => new List<EquipmentSlot> { targetSlot }
             };
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// Testing helper to configure item properties in-memory without inspector serialization.
+        /// </summary>
+        public void ConfigureForTest(
+            string id,
+            string name,
+            GameObject prefab,
+            IEnumerable<EquipmentSlot> allowed,
+            IEnumerable<EquipmentSlot> additional = null,
+            BodyPartMask hiddenParts = BodyPartMask.None,
+            IEnumerable<string> shrinkShapes = null)
+        {
+            this.itemId = id;
+            this.itemName = name;
+            this.itemPrefab = prefab;
+            this.allowedSlots = allowed != null ? new List<EquipmentSlot>(allowed) : new List<EquipmentSlot>();
+            this.additionalOccupiedSlots = additional != null ? new List<EquipmentSlot>(additional) : new List<EquipmentSlot>();
+            this.hiddenBodyParts = hiddenParts;
+            this.shrinkBlendShapes = shrinkShapes != null ? new List<string>(shrinkShapes) : new List<string>();
+        }
+#endif
     }
 }

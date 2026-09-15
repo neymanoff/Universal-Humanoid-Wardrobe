@@ -447,5 +447,15 @@ namespace Neymanoff.HumanoidWardrobe
                 }
             }
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// Testing helper to configure modular body parts in-memory.
+        /// </summary>
+        public void ConfigureModularPartsForTest(IEnumerable<ModularBodyPart> parts)
+        {
+            modularBodyParts = parts != null ? new List<ModularBodyPart>(parts) : new List<ModularBodyPart>();
+        }
+#endif
     }
 }
