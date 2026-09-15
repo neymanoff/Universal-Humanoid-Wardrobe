@@ -53,3 +53,20 @@ All issues were resolved in commit `6fd88c9`:
 * All `.meta` files recovered and GUID bindings validated.
 * Test `.asmdef` references repaired.
 * In-editor instantiation leak fixed with proper `Undo` group collapsing.
+
+---
+
+## 4. Local AI Swarm & Standards Setup (Phase 0 Summary)
+
+In commit `15bbeb8`:
+* Configured local Ollama swarm (`http://127.0.0.1:11434`) on RTX 5080:
+  * `unity-coder:30b` (tailored `qwen3-coder:30b` for Unity 6 C# synthesis).
+  * `unity-thinker:32b` (tailored `deepseek-r1:32b` for architectural auditing).
+  * `nomic-embed-text` for semantic codebase vectorization.
+* Configured global MCP stdio bridge in `~/.gemini/config/mcp_config.json` via `ollama-mcp`.
+* Enforced 3-Tier Anti-Obsolete Defense:
+  * Tier 1: Modelfile system constraints in Ollama.
+  * Tier 2: `docs/UNITY6_STANDARDS.md` architectural specification.
+  * Tier 3: `Directory.Build.props` setting `<WarningsAsErrors>CS0618</WarningsAsErrors>`.
+* Established root `AGENTS.md` for zero-configuration onboarding of AI coding tools.
+

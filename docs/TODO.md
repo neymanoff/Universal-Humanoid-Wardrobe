@@ -10,118 +10,125 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 
 | Phase | Milestone | Priority | Status |
 | :--- | :--- | :---: | :---: |
-| **Phase 1** | Immediate Core Architecture Refactoring | 🔴 Critical | 🔄 In Progress |
-| **Phase 2** | Rig Robustness & Bone Remapping | 🟡 High | ⏳ Next |
-| **Phase 3** | Loadout Persistence & DTO Serialization | 🟡 High | 📋 Planned |
-| **Phase 4** | UPM Samples Separation | 🟢 Medium | 📋 Planned |
-| **Phase 5** | Comprehensive Automated Test Suite | 🔴 Critical | 📋 Planned |
-| **Phase 6** | Advanced Features (Rig Profiles & Body Masking) | 🟢 Medium | 📋 Planned |
-| **Phase 7** | Asset Store Submission & Polish | 🔵 Release | 📋 Planned |
+| **Phase 0** | AI Agent Infrastructure & 3-Tier Anti-Obsolete Defense | 🔴 Critical | ✅ Completed |
+| **Phase 1** | Immediate Core Architecture Refactoring | 🔴 Critical | ✅ Completed |
+| **Phase 2** | Loadout Persistence & DTO Serialization | 🟡 High | ✅ Completed |
+| **Phase 3** | Rig Robustness & Helper/Twist Bone Remapping | 🟡 High | 🔄 Next |
+| **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | 📋 Planned |
+| **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | 📋 Planned |
+| **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | 📋 Planned |
+| **Phase 7** | Asset Store Submission & Showcase Demo Scene | 🔵 Release | 📋 Planned |
 
 ---
 
-## Phase 1: Immediate Core Architecture Refactoring (🔄 In Progress)
+## Phase 0: AI Agent Infrastructure & 3-Tier Defense (✅ Completed)
 
-The foundational architectural pillars to establish before expanding features:
+- [x] **0.1. Local Model Swarm Setup (Ollama & RTX 5080)**:
+  - [x] Integrate `unity-coder:30b` (pre-conditioned `qwen3-coder:30b` for Unity 6 C# synthesis).
+  - [x] Integrate `unity-thinker:32b` (pre-conditioned `deepseek-r1:32b` for architectural auditing).
+  - [x] Install `nomic-embed-text` for semantic codebase vector indexing.
+  - [x] Configure global MCP bridge in `~/.gemini/config/mcp_config.json` via `ollama-mcp`.
+- [x] **0.2. 3-Tier Defense Against Obsolete APIs (CS0618)**:
+  - [x] Tier 1: Modelfile system prompts with explicit prohibitions on legacy methods (`FindObjectOfType`, `WWW`, `UI.Text`, `RandomRange`).
+  - [x] Tier 2: Create [docs/UNITY6_STANDARDS.md](UNITY6_STANDARDS.md) with replacement tables, zero-GC conventions, and bone remapping rules.
+  - [x] Tier 3: Create [Directory.Build.props](../Directory.Build.props) with `<WarningsAsErrors>CS0618</WarningsAsErrors>`.
+- [x] **0.3. Universal Onboarding Rules**:
+  - [x] Create root [AGENTS.md](../AGENTS.md) for universal discovery by all AI IDEs and agents.
+  - [x] Update [docs/TEAM_AGREEMENTS.md](TEAM_AGREEMENTS.md) to define collaboration protocols.
 
-- [ ] **1.1. Refactor Slot Model & Multi-Slot Occupancy**:
-  - [ ] Replace restrictive `ItemSlotRestriction` enum with declarative slot configuration on `WardrobeItemSO`:
+---
+
+## Phase 1: Immediate Core Architecture Refactoring (✅ Completed)
+
+The foundational architectural pillars established to guarantee game-agnostic behavior:
+
+- [x] **1.1. Refactor Slot Model & Multi-Slot Occupancy**:
+  - [x] Replace restrictive enum with declarative slot configuration on `WardrobeItemSO`:
     - `List<EquipmentSlot> allowedSlots` (e.g., `[MainHand, OffHand]` or `[LeftRing, RightRing]`).
     - `List<EquipmentSlot> additionalOccupiedSlots` (e.g., `[OffHand]` for 2H weapons).
-  - [ ] Introduce `EquippedItemInstance` internal record:
+  - [x] Introduce `EquippedItemInstance` internal record:
     - Holds `WardrobeItemSO`, spawned `GameObject`, `PrimarySlot`, and `IReadOnlyList<EquipmentSlot> OccupiedSlots`.
-  - [ ] Multi-slot dictionary mapping:
-    - Point all occupied slots to the same `EquippedItemInstance` (e.g. `_slotToInstance[MainHand]` and `_slotToInstance[OffHand]`).
-  - [ ] Atomic multi-slot unequip:
-    - Calling `Unequip` on any occupied slot unlinks all associated slots and destroys the visual GameObject once.
-- [ ] **1.2. Stable `ItemId` Implementation**:
-  - [ ] Add `[SerializeField] private string itemId` to `WardrobeItemSO`.
-  - [ ] Ensure persistence and serialization rely strictly on `ItemId`, never asset filenames or `Resources.Load`.
-- [ ] **1.3. Explicit `EquipResult` & Richer Events**:
-  - [ ] Replace `GameObject` null-return with `EquipResult` struct:
-    - `EquipResultStatus`: `Success`, `InvalidSlot`, `SlotOccupied`, `MissingPrefab`, `MissingBone`, `IncompatibleRig`.
-  - [ ] Upgrade event signatures:
+  - [x] Multi-slot dictionary mapping:
+    - Point all occupied slots to the same `EquippedItemInstance`.
+  - [x] Atomic multi-slot unequip:
+    - Calling `Unequip` on any occupied slot cleanly frees all linked slots and destroys visual instance once.
+- [x] **1.2. Stable `ItemId` Implementation**:
+  - [x] Add `[SerializeField] private string itemId` to `WardrobeItemSO` with backward-compatible fallback to asset name.
+  - [x] Decouple persistence from asset file names.
+- [x] **1.3. Explicit `EquipResult` & Richer Events**:
+  - [x] Replace `GameObject` null-return with explicit `EquipResult` struct (`Success`, `InvalidSlot`, `SlotOccupied`, `MissingBone`, `MissingPrefab`).
+  - [x] Upgrade event signatures:
     - `event Action<EquipmentSlot, WardrobeItemSO, GameObject> OnItemEquipped;`
     - `event Action<EquipmentSlot, WardrobeItemSO> OnItemUnequipped;`
     - `event Action<WardrobeLoadout> OnLoadoutChanged;`
-- [ ] **1.4. Extract Equipment Rule Resolver**:
-  - [ ] Separate slot conflict detection and validation logic from `WardrobeManager` into an isolated `EquipmentRuleResolver` domain helper.
+- [x] **1.4. Extract Equipment Rule Resolver**:
+  - [x] Separate slot conflict detection and validation logic into pure domain helper `EquipmentRuleResolver`.
 
 ---
 
-## Phase 2: Rig Robustness & Bone Remapping (⏳ Next)
+## Phase 2: Loadout Persistence & DTO Serialization (✅ Completed)
 
-- [ ] **2.1. `SkinnedMeshRemapper` Fixes**:
-  - [ ] Set `clothingRenderer.rootBone` to the skeleton's root bone (`Hips` / `spine`) instead of the character GameObject root.
-  - [ ] Add option to inherit or expand `localBounds` from the host character mesh to eliminate frustum culling flicker.
-  - [ ] Implement Humanoid Avatar fallback bone resolution (`Animator.GetBoneTransform`) for standard body joints when bone names differ.
-- [ ] **2.2. Twist & Helper Bone Handling**:
-  - [ ] Document rig matching requirements in code and warnings.
-  - [ ] Prepare architecture for bone alias mapping for non-standard DCC twist bones.
-- [ ] **2.3. Test Models Integration**:
-  - [ ] Verify imported binary FBX and texture assets against restored `.meta` GUIDs.
+- [x] **2.1. `WardrobeLoadout` Data Transfer Object**:
+  - [x] Serializable `EquippedSlotEntry` struct (`slot`, `itemId`).
+  - [x] `WardrobeLoadout.ToJson()` and `WardrobeLoadout.FromJson()`.
+- [x] **2.2. Manager Integration**:
+  - [x] `WardrobeManager.GetCurrentLoadout()`.
+  - [x] `WardrobeManager.ApplyLoadout(WardrobeLoadout loadout, Func<string, WardrobeItemSO> resolver)`.
+  - [x] Batch loadout application with single `OnLoadoutChanged` event emission.
 
 ---
 
-## Phase 3: Loadout Persistence & DTO Serialization (📋 Planned)
+## Phase 3: Rig Robustness & Helper/Twist Bone Remapping (🔄 Next)
 
-- [ ] **3.1. `WardrobeLoadout` Data Transfer Object**:
-  - [ ] Serializable `EquippedSlotEntry` struct (`slot`, `itemId`).
-  - [ ] `WardrobeLoadout.ToJson()` and `WardrobeLoadout.FromJson()`.
-- [ ] **3.2. Manager Integration**:
-  - [ ] `WardrobeManager.GetCurrentLoadout()`.
-  - [ ] `WardrobeManager.ApplyLoadout(WardrobeLoadout loadout, Func<string, WardrobeItemSO> resolver)`.
-  - [ ] Guarantee exactly one `OnLoadoutChanged` event per batch loadout application.
+- [x] **3.1. `rootBone` Anchoring**:
+  - [x] Set `clothingRenderer.rootBone` to skeleton's `Hips` bone (`HumanBodyBones.Hips`) instead of GameObject root.
+- [ ] **3.2. Twist & Helper Bone Safe Fallbacks**:
+  - [ ] If apparel mesh references bones not present in base character skeleton (e.g. `Arm_Twist_01`), implement parent-bone fallback binding to prevent vertex tearing.
+  - [ ] Log informative warning when non-standard helper bones are re-routed.
+- [ ] **3.3. Bounding Box & Frustum Culling**:
+  - [ ] Inherit or expand `localBounds` from base character mesh to eliminate camera frustum culling flicker.
 
 ---
 
-## Phase 4: UPM Samples Separation (📋 Planned)
+## Phase 4: Mesh Clipping & Body Part Masking (📋 Planned)
 
-- [ ] **4.1. Decouple Demo UI from Core Package**:
-  - [ ] Move `Runtime/UI/` (`DemoInventoryUI`, `EquipmentSlotUI`, `WardrobeDemoAnimationController`) into `Samples~/Demo/`.
+- [ ] **4.1. Body Mask Flags on `WardrobeItemSO`**:
+  - [ ] Add `[System.Flags] public enum BodyPartMask { None, Head, Torso, Arms, Hands, Legs, Feet }`.
+  - [ ] Allow items (e.g. plate cuirass, closed boots) to declare which body regions they conceal.
+- [ ] **4.2. Target Character Body Mesh Hiding**:
+  - [ ] Support modular character setups: deactivate sub-meshes or set blendshapes to shrink occluded geometry, completely eliminating poke-through clipping.
+
+---
+
+## Phase 5: UPM Samples Separation (📋 Planned)
+
+- [ ] **5.1. Decouple Demo UI from Core Package**:
+  - [ ] Move `Packages/.../Runtime/UI/` (`DemoInventoryUI`, `EquipmentSlotUI`, `WardrobeDemoAnimationController`) into `Samples~/Demo/`.
   - [ ] Register sample in `package.json` with sample metadata and preview scene.
-  - [ ] Ensure core package compiles and operates cleanly without the demo UI assembly.
+  - [ ] Ensure core package compiles with zero dependencies on the demo UI.
 
 ---
 
-## Phase 5: Comprehensive Automated Test Suite (🔴 Critical)
+## Phase 6: Comprehensive Automated NUnit Test Suite (🔴 Critical)
 
-Both EditMode and PlayMode tests covering core stability and edge cases:
-
-- [ ] **Slot & Rule Tests**:
-  - [ ] Can equip into any allowed slot (e.g. one-handed weapon in either hand).
-  - [ ] Two-handed weapon occupies both `MainHand` and `OffHand`.
-  - [ ] Unequipping multi-slot item from secondary slot (e.g. `OffHand`) cleanly clears both slots and destroys visual instance once.
-  - [ ] Equip same item twice handling.
-  - [ ] Slot conflict resolution with existing equipped items.
+EditMode and PlayMode unit tests covering:
+- [ ] **Rule & Slot Tests**:
+  - [ ] Single-slot equip/unequip.
+  - [ ] Two-handed weapon occupies `MainHand` and `OffHand`.
+  - [ ] Secondary slot unequip clears primary slot atomically.
+  - [ ] Conflicting item replacement behavior.
 - [ ] **Serialization Tests**:
   - [ ] `WardrobeLoadout` JSON serialization roundtrip fidelity.
-  - [ ] Rehydrating loadout with unknown `ItemId` gracefully reports failure.
-  - [ ] Duplicate `ItemId` detection and validation.
-- [ ] **Robustness & Edge Cases**:
-  - [ ] Missing bone in character skeleton returns `EquipResultStatus.MissingBone`.
-  - [ ] Invalid or null prefab returns `EquipResultStatus.MissingPrefab`.
-  - [ ] Incompatible rig detection.
-  - [ ] Rigs with differing bone naming conventions (Rigify vs Mixamo vs Synty).
-- [ ] **Event & Lifecycle Tests**:
-  - [ ] Event firing order verification (`OnItemUnequipped` -> `OnItemEquipped` -> `OnLoadoutChanged`).
-  - [ ] Exactly one `OnLoadoutChanged` fired per multi-slot transaction.
-  - [ ] Invalid `defaultLoadout` entries handled gracefully without exceptions.
-  - [ ] In-Editor Preview -> Clear Preview -> Assert zero leaked or dangling GameObjects.
+  - [ ] Missing item resolution handling.
+- [ ] **Edge Cases**:
+  - [ ] Missing bone in avatar returns `EquipResultStatus.MissingBone`.
+  - [ ] Null/destroyed prefab handling.
 
 ---
 
-## Phase 6: Advanced Features (📋 Planned)
+## Phase 7: Asset Store Submission & Showcase Demo Scene (🔵 Release)
 
-- [ ] **6.1. `WardrobeRigProfile`**:
-  - [ ] ScriptableObject defining per-rig socket offsets (Orc, Elf, Dwarf, Human), bone aliases, and custom bounds.
-- [ ] **6.2. Body Coverage & Mesh Clipping (`HideBodyParts`)**:
-  - [ ] Add flags to `WardrobeItemSO` (e.g. `HideTorso`, `HideArms`, `HideLegs`) to hide host body sub-meshes and eliminate armor poke-through.
-
----
-
-## Phase 7: Asset Store Submission & Polish (📋 Planned)
-
-- [ ] Unity Package Validation tests (zero warnings, valid dependency manifests).
-- [ ] XML API documentation on all public methods and types.
-- [ ] Marketing assets: 1920x1080 banner, 512x512 icon, preview GIFs.
+- [ ] Interactive showcase scene with character model, apparel switcher, weapon swapping, and loadout preset saving.
+- [ ] XML API documentation across all public classes.
+- [ ] Unity Package Validation tests passing with 0 warnings.
+- [ ] Asset Store marketing materials (screenshots, banner, documentation links).
