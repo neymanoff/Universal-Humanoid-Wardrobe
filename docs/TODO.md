@@ -17,7 +17,8 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | ✅ Completed |
 | **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | ✅ Completed |
 | **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | ✅ Completed |
-| **Phase 7** | Asset Store Submission & Showcase Demo Scene | 🔵 Release | 🔄 Next |
+| **Phase 7** | Package Validation, Docs & Demo Polish | 🔵 High | ✅ Completed |
+| **Phase 8** | Interactive In-Editor Acceptance Testing & Feedback | 🔴 Critical | 🔄 Next |
 
 ---
 
@@ -146,9 +147,26 @@ EditMode and PlayMode unit tests covering:
 
 ---
 
-## Phase 7: Asset Store Submission & Showcase Demo Scene (🔄 Next)
+## Phase 7: Package Validation, Docs & Demo Polish (✅ Completed)
 
-- [ ] Interactive showcase scene with character model, apparel switcher, weapon swapping, and loadout preset saving.
-- [ ] XML API documentation across all public classes.
-- [ ] Unity Package Validation tests passing with 0 warnings.
-- [ ] Asset Store marketing materials (screenshots, banner, documentation links).
+- [x] **7.1. Interactive Showcase Demo Polish**:
+  - [x] Added live JSON preset Save/Load persistence in `DemoInventoryUI.cs` with hotkeys (`[F5]` save, `[F9]` load, `[C]` clear).
+  - [x] Synchronized changes across local `Assets/Scripts/Demo/` and official UPM `Samples~/Demo/Scripts/`.
+  - [x] Verified full mouse rotation via `CharacterRotator.cs`.
+- [x] **7.2. XML API Documentation Audit**:
+  - [x] Documented all public classes, methods, properties, and events across `WardrobeManager`, `WardrobeItemSO`, `SkinnedMeshRemapper`, `HumanoidAttachmentPoint`, `EquipmentRuleResolver`, `EquipResult`, `EquippedItemInstance`, `WardrobeLoadout`, and `BodyPartMask`.
+- [x] **7.3. Package Validation & Release Artifacts**:
+  - [x] Enhanced `package.json` with discovery keywords and sample paths.
+  - [x] Updated `CHANGELOG.md` for version 1.0.0 detailing all architectural milestones.
+
+---
+
+## Phase 8: Interactive In-Editor Acceptance Testing & Feedback (🔄 Next)
+
+Hands-on developer verification in Unity Editor PlayMode:
+- [ ] Open `Assets/Scenes/WardrobeDemoScene.unity` and press **Play**.
+- [ ] Test paper-doll equip/unequip by clicking items in the inventory grid.
+- [ ] Test two-handed weapon auto-occupying both hands and blocking offhand.
+- [ ] Test pressing `[F5]` to save loadout preset, `[C]` to unequip all, and `[F9]` to restore saved loadout.
+- [ ] Test 360° character inspection via left-click mouse drag.
+- [ ] Gather developer UX feedback and apply any requested behavioral tweaks.

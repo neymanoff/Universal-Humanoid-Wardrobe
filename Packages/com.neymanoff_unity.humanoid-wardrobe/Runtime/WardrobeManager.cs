@@ -286,23 +286,43 @@ namespace Neymanoff.HumanoidWardrobe
             OnLoadoutChanged?.Invoke(GetCurrentLoadout());
         }
 
+        /// <summary>
+        /// Checks whether the specified equipment slot is currently occupied.
+        /// </summary>
+        /// <param name="slot">The equipment slot to query.</param>
+        /// <returns>True if an item is occupying the slot; otherwise false.</returns>
         public bool IsSlotOccupied(EquipmentSlot slot)
         {
             return _slotToInstance.TryGetValue(slot, out var inst) && inst != null;
         }
 
+        /// <summary>
+        /// Returns the spawned 3D visual GameObject occupying the specified slot, if any.
+        /// </summary>
+        /// <param name="slot">The equipment slot to query.</param>
+        /// <returns>The spawned GameObject or null if empty.</returns>
         public GameObject GetEquippedItem(EquipmentSlot slot)
         {
             _slotToInstance.TryGetValue(slot, out var instance);
             return instance?.InstanceObject;
         }
 
+        /// <summary>
+        /// Returns the WardrobeItemSO definition of the item occupying the specified slot, if any.
+        /// </summary>
+        /// <param name="slot">The equipment slot to query.</param>
+        /// <returns>The source WardrobeItemSO or null if empty.</returns>
         public WardrobeItemSO GetEquippedItemData(EquipmentSlot slot)
         {
             _slotToInstance.TryGetValue(slot, out var instance);
             return instance?.ItemData;
         }
 
+        /// <summary>
+        /// Returns the active EquippedItemInstance tracking the item in the specified slot, if any.
+        /// </summary>
+        /// <param name="slot">The equipment slot to query.</param>
+        /// <returns>The active EquippedItemInstance or null if empty.</returns>
         public EquippedItemInstance GetEquippedInstance(EquipmentSlot slot)
         {
             _slotToInstance.TryGetValue(slot, out var instance);

@@ -5,6 +5,17 @@
 	"unity": "6000.5",
 	"unityRelease": "2f1",
 	"description": "A flexible, lightweight Unity package for dynamic character customization. Supports skinned mesh remapping for clothing/armor and bone attachment for weapons/items on Humanoid rigs, complete with custom Editor preview tools.",
+	"keywords": [
+		"wardrobe",
+		"character",
+		"equipment",
+		"customization",
+		"humanoid",
+		"armor",
+		"clothing",
+		"modular",
+		"anti-clipping"
+	],
 	"dependencies": {
 		"com.unity.test-framework": "1.6.0"
 	},

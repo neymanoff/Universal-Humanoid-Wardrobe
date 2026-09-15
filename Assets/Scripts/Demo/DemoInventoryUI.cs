@@ -1,21 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace Neymanoff.HumanoidWardrobe.UI
 {
     /// <summary>
-    ///  Demo inventory controller that manages inventory grid items, dynamic hiding of equipped items.
+    /// Demo inventory controller managing inventory grid display, paper-doll slots,
+    /// dynamic item equip/unequip, and interactive loadout persistence (Save/Load).
     /// </summary>
     [DisallowMultipleComponent]
     public class DemoInventoryUI : MonoBehaviour
     {
-        [Header("Target Character")] [Tooltip("The character's WardrobeManager to equip items on")] [SerializeField]
+        private const string SaveKey = "WardrobeDemo_SavedLoadout";
+
+        [Header("Target Character")]
+        [Tooltip("The character's WardrobeManager to equip items on.")]
+        [SerializeField]
         private WardrobeManager wardrobeManager;
 
         [Header("Available Items Database")]
-        [Tooltip("List of item ScriptableObjects to display in the inventory grid")]
+        [Tooltip("List of item ScriptableObjects to display in the inventory grid.")]
         [SerializeField]
         private List<WardrobeItemSO> availableItems = new();
 
@@ -24,11 +31,19 @@ namespace Neymanoff.HumanoidWardrobe.UI
         [SerializeField]
         private Transform inventoryGridContainer;
 
-        [Tooltip("Button prefab instantiated for each item in the grid.")] [SerializeField]
+        [Tooltip("Button prefab instantiated for each item in the grid.")]
+        [SerializeField]
         private GameObject inventoryItemButtonPrefab;
 
-        [Header("Paper-doll Slots")] [Tooltip("List of equipment slots on the character paper-doll")] [SerializeField]
+        [Header("Paper-doll Slots")]
+        [Tooltip("List of equipment slots on the character paper-doll.")]
+        [SerializeField]
         private List<EquipmentSlotUI> equipmentSlots = new();
+
+        [Header("Persistence Demo Feedback (Optional)")]
+        [Tooltip("Optional TextMeshProUGUI element to display save/load notifications.")]
+        [SerializeField]
+        private TextMeshProUGUI statusFeedbackText;
 
         private readonly Dictionary<WardrobeItemSO, GameObject> _itemButtonMap = new();
 
@@ -40,7 +55,10 @@ namespace Neymanoff.HumanoidWardrobe.UI
             if (wardrobeManager != null)
             {
                 wardrobeManager.OnEquipmentChanged += HandleManagerEquipmentChanged;
+                wardrobeManager.OnLoadoutChanged += HandleManagerLoadoutChanged;
             }
+
+            SetFeedback("Demo Ready: Click items to equip | [F5] Save | [F9] Load | [C] Clear");
         }
 
         private void OnDestroy()
@@ -48,6 +66,25 @@ namespace Neymanoff.HumanoidWardrobe.UI
             if (wardrobeManager != null)
             {
                 wardrobeManager.OnEquipmentChanged -= HandleManagerEquipmentChanged;
+                wardrobeManager.OnLoadoutChanged -= HandleManagerLoadoutChanged;
+            }
+        }
+
+        private void Update()
+        {
+            if (Keyboard.current == null) return;
+
+            if (Keyboard.current.f5Key.wasPressedThisFrame)
+            {
+                SaveCurrentLoadout();
+            }
+            else if (Keyboard.current.f9Key.wasPressedThisFrame)
+            {
+                LoadSavedLoadout();
+            }
+            else if (Keyboard.current.cKey.wasPressedThisFrame)
+            {
+                UnequipAll();
             }
         }
 
@@ -105,10 +142,88 @@ namespace Neymanoff.HumanoidWardrobe.UI
             }
         }
 
+        /// <summary>
+        /// Equips the specified WardrobeItemSO onto the character.
+        /// </summary>
         public void EquipItem(WardrobeItemSO itemSO)
         {
             if (wardrobeManager == null || itemSO == null) return;
-            wardrobeManager.EquipItemSO(itemSO, itemSO.TargetSlot);
+
+            EquipmentSlot targetSlot = (itemSO.AllowedSlots != null && itemSO.AllowedSlots.Count > 0)
+                ? itemSO.AllowedSlots[0]
+                : itemSO.TargetSlot;
+
+            var result = wardrobeManager.Equip(itemSO, targetSlot);
+            if (!result.IsSuccess)
+            {
+                SetFeedback($"Equip failed: {result.ErrorMessage}");
+            }
+        }
+
+        /// <summary>
+        /// Saves the active loadout to PlayerPrefs in JSON format.
+        /// </summary>
+        public void SaveCurrentLoadout()
+        {
+            if (wardrobeManager == null) return;
+
+            WardrobeLoadout loadout = wardrobeManager.GetCurrentLoadout();
+            string json = loadout.ToJson(prettyPrint: true);
+            PlayerPrefs.SetString(SaveKey, json);
+            PlayerPrefs.Save();
+
+            Debug.Log($"[DemoInventoryUI] Preset saved ({loadout.entries.Count} items):\n{json}");
+            SetFeedback($"Preset Saved ({loadout.entries.Count} items) [F5]");
+        }
+
+        /// <summary>
+        /// Restores a previously saved loadout from PlayerPrefs.
+        /// </summary>
+        public void LoadSavedLoadout()
+        {
+            if (wardrobeManager == null) return;
+
+            if (!PlayerPrefs.HasKey(SaveKey))
+            {
+                Debug.LogWarning("[DemoInventoryUI] No saved loadout preset found in PlayerPrefs.");
+                SetFeedback("No saved loadout found! Press [F5] to save first.");
+                return;
+            }
+
+            string json = PlayerPrefs.GetString(SaveKey);
+            WardrobeLoadout loadout = WardrobeLoadout.FromJson(json);
+            wardrobeManager.ApplyLoadout(loadout, FindItemById);
+
+            Debug.Log($"[DemoInventoryUI] Preset restored ({loadout.entries.Count} items).");
+            SetFeedback($"Preset Restored ({loadout.entries.Count} items) [F9]");
+        }
+
+        /// <summary>
+        /// Resolves an item from available inventory by stable ItemId.
+        /// </summary>
+        public WardrobeItemSO FindItemById(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            for (int i = 0; i < availableItems.Count; i++)
+            {
+                if (availableItems[i] != null && string.Equals(availableItems[i].ItemId, id, StringComparison.OrdinalIgnoreCase))
+                {
+                    return availableItems[i];
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Unequips all items from the character.
+        /// </summary>
+        public void UnequipAll()
+        {
+            if (wardrobeManager != null)
+            {
+                wardrobeManager.UnequipAll();
+                SetFeedback("All items unequipped [C]");
+            }
         }
 
         private void HandleManagerEquipmentChanged(EquipmentSlot slot, GameObject equippedObject)
@@ -116,25 +231,31 @@ namespace Neymanoff.HumanoidWardrobe.UI
             RefreshAllUI();
         }
 
+        private void HandleManagerLoadoutChanged(WardrobeLoadout loadout)
+        {
+            RefreshAllUI();
+        }
+
         private void RefreshAllUI()
         {
             if (wardrobeManager == null) return;
+
             HashSet<WardrobeItemSO> currentlyEquippedSO = new();
-            foreach (EquipmentSlot slot in System.Enum.GetValues(typeof(EquipmentSlot)))
+            foreach (EquipmentSlot slot in Enum.GetValues(typeof(EquipmentSlot)))
             {
                 WardrobeItemSO equippedSO = wardrobeManager.GetEquippedItemData(slot);
                 if (equippedSO != null)
                 {
                     currentlyEquippedSO.Add(equippedSO);
                 }
-                
-                EquipmentSlotUI slotUI = equipmentSlots.Find(s => s.slotType == slot);
+
+                EquipmentSlotUI slotUI = equipmentSlots.Find(s => s.SlotType == slot);
                 if (slotUI != null)
                 {
                     slotUI.SetEquipmentItem(equippedSO);
                 }
             }
-            
+
             WardrobeItemSO mainHandSO = wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand);
             if (mainHandSO != null && mainHandSO.Restriction == ItemSlotRestriction.TwoHanded)
             {
@@ -157,12 +278,12 @@ namespace Neymanoff.HumanoidWardrobe.UI
             }
         }
 
-            public void UnequipAll()
+        private void SetFeedback(string message)
+        {
+            if (statusFeedbackText != null)
             {
-                if (wardrobeManager != null)
-                {
-                    wardrobeManager.UnequipAll();
-                }
+                statusFeedbackText.text = message;
             }
         }
     }
+}

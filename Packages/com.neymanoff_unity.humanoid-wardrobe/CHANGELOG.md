@@ -8,18 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-09-15
 
 ### Added
-- Comprehensive package documentation and API reference manual in `Documentation/humanoid-wardrobe.md`.
-- Full project documentation and Git LFS recovery guide in `README.md`.
-- Detailed project audit and architectural roadmap in `docs/PROJECT_AUDIT_AND_ROADMAP.md`.
+- Multi-slot occupancy architecture (`allowedSlots`, `additionalOccupiedSlots`, `EquippedItemInstance`) supporting two-handed weapons and cross-slot dual-wielding.
+- Explicit equipment status contracts via `EquipResult` and `EquipResultStatus` enum.
+- Pure domain helper `EquipmentRuleResolver` decoupling rule evaluation from visual instantiation.
+- Persistent loadout DTO (`WardrobeLoadout`) with JSON serialization and atomic batch rehydration.
+- Robust twist/helper bone handling with hierarchical ancestor fallback and normalized prefix resolution in `SkinnedMeshRemapper`.
+- Frustum culling bounds stabilization inheriting base character bounding boxes to prevent flicker.
+- Hybrid anti-clipping system: granular anatomical `BodyPartMask` flags and automated `shrinkBlendShapes` morph evaluation in `WardrobeManager`.
+- Step-by-step 3D artist Blender 4.x authoring guide for modular sub-meshes and shrink shape keys in `docs/BLENDER_CHARACTER_SETUP.md`.
+- Official UPM sample structure (`Samples~/Demo/`) with dedicated `Neymanoff.HumanoidWardrobe.Demo.asmdef` and `.sample.json` manifest.
+- Comprehensive automated NUnit test suite under `Tests/Runtime/` covering domain rules, serialization fidelity, contracts, bitmasks, and manager lifecycle.
+- Interactive demo UI enhancement with live JSON preset save/load hotkeys (`F5` save, `F9` load, `C` clear).
 
 ### Fixed
-- Fixed typo in `Neymanoff.HumanoidWardrobe.Tests.asmdef` assembly reference (`Neymanoff.HumanoidWardrobeardrobe` -> `Neymanoff.HumanoidWardrobe`).
-- Fixed invalid assembly references in `Neymanoff.HumanoidWardrobe.Editor.Tests.asmdef`.
-- Restored missing `.meta` files across all asset categories after Git clone corruption.
-- Cleaned up Git index state from accidental mass-staged deletions.
+- Fixed destroyed bone references when clothing contains twist bones absent from the humanoid skeleton.
+- Fixed frustum culling mesh disappearing when camera moves away from origin.
+- Fixed assembly reference and meta file corruptions across tests and samples.
 
 ### Changed
-- Standardized package metadata in `package.json` for Unity 6 compatibility.
+- Refactored `WardrobeManager` to be 100% gameplay- and UI-agnostic with zero TextMeshPro or UI dependencies in the core runtime assembly.
+- Standardized package metadata in `package.json` with keywords and sample definitions.
 
 ## [0.1.0] - 2026-07-11
 
