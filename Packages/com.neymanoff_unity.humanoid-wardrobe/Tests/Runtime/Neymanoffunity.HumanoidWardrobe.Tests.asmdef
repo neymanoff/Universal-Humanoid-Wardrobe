@@ -1,7 +1,7 @@
 {
     "name": "Neymanoff.HumanoidWardrobe.Tests",
     "references": [
-        "Neymanoff.HumanoidWardrobeardrobe"
+        "Neymanoff.HumanoidWardrobe"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

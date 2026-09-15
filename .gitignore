@@ -42,6 +42,16 @@
 # Visual Studio cache directory
 .vs/
 
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider IDE project files
+/[.][Ii]dea/
+
+# AI Assistants & Development Tools
+.gemini/
+.antigravity/
+
 # Gradle cache directory
 .gradle/
 
@@ -106,9 +116,6 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
-# JetBrains Rider IDE project files
-/[.][Ii]dea/
-
 # Unity Package Manager tarballs
 *.tgz
 *.tgz.meta
@@ -117,6 +124,20 @@ InitTestScene*.unity*
 /[Aa]ssets/TutorialInfo/
 /[Aa]ssets/TutorialInfo.meta
 
+# Local Unity Editor / Profiler / Auditor Settings
+ProjectSettings/ProjectAuditorSettings.asset
+ProjectSettings/ProjectAuditorSettings.asset.meta
+
 # macOS system files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 .DS_Store.meta
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/

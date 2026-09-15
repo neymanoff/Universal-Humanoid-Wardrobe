@@ -1,8 +1,8 @@
 {
     "name": "Neymanoff.HumanoidWardrobe.Editor.Tests",
     "references": [
-        "Neymanoffunity.Humanoidwardrobe.Editor",
-        "Neymanoffunity.Humanoidwardrobe"
+        "Neymanoff.HumanoidWardrobe.Editor",
+        "Neymanoff.HumanoidWardrobe"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

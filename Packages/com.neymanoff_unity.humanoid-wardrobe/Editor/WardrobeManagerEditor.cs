@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 
 namespace Neymanoff.HumanoidWardrobe.Editor
@@ -47,13 +47,11 @@ namespace Neymanoff.HumanoidWardrobe.Editor
             {
                 if (!item.prefab) continue;
                 
-                GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(item.prefab);
-                
-                Undo.RegisterCreatedObjectUndo(instance, $"Equip Default {item.slot}");
-
-                _manager.Equip(item.slot, instance);
-                
-                Undo.SetTransformParent(instance.transform, instance.transform.parent, "Reparent Equipped Item");
+                GameObject instance = _manager.Equip(item.slot, item.prefab);
+                if (instance != null)
+                {
+                    Undo.RegisterCreatedObjectUndo(instance, $"Equip Default {item.slot}");
+                }
             }
             
             Undo.CollapseUndoOperations(undoGroup);
