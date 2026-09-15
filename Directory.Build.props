@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Treat Obsolete / Deprecated API usages (CS0618) as compilation errors across all projects -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS0618</WarningsAsErrors>
+  </PropertyGroup>
+</Project>
