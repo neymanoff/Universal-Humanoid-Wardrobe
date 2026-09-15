@@ -4,23 +4,21 @@ This document details the architectural foundation, design principles, class str
 
 ---
 
-## 1. System Overview and Design Goals
+## 1. Architectural Principles
 
-The primary goal of the **Universal Humanoid Wardrobe** package is to provide an extensible, decoupled, and performant character customization subsystem for Unity.
+### 1.1. Gameplay-Agnostic / Host-Game-Agnostic
+The wardrobe module is strictly **Unity-specific** (relying on `UnityEngine`, `Animator`, `HumanBodyBones`, `SkinnedMeshRenderer`), but it is completely **Gameplay-Agnostic**:
+* It does not know or care about combat calculations, weapon stats, durability, player levels, or inventory currencies.
+* It does not impose an inventory architecture (grid, weight, slots, or tree-based).
+* Its single responsibility is **managing visual equipment representation, bone bindings, socket transforms, and equipment occupancy state**.
 
-### Key Architectural Principles
-1. **Engine Agnostic Decoupling**: The wardrobe core does not dictate gameplay rules, character movement, stat calculations, or inventory architecture. It acts strictly as an equipment visualization and binding manager.
-2. **Standard Humanoid Rig Compliance**: Works seamlessly on any character model configured with Unity's standard `Humanoid` Avatar rig.
-3. **Dual Attachment Paradigms**:
-   * **Skinned Deforming Items**: Clothing and armor meshes dynamically remap their bone bindings to match the host character skeleton without duplicating skeletons.
-   * **Rigid Socketed Items**: Weapons, shields, helmets, and accessories parent to designated `HumanBodyBones` sockets with configurable local offsets and auto-mirroring.
-4. **State Persistence**: Supports both scene-transferable GameObject retention (`DontDestroyOnLoad`) and lightweight serialization via data transfer objects (`WardrobeLoadout`).
+### 1.2. Split Compatibility Guarantees
+* **Rigid Items (Socket Attachment)**: **High Universality**. Attached directly to standard `HumanBodyBones` transforms (e.g. `RightHand`, `LeftHand`, `Head`). Functions out-of-the-box on virtually any valid Unity Humanoid avatar.
+* **Skinned Items (Mesh Remapping)**: **Rig-Dependent**. Humanoid animation retargeting retargets motion, but it does *not* automatically deform meshes across wildly different bind poses, body proportions, or rest poses. Skinned clothing meshes require matching rest poses and compatible bone hierarchies (including helper/twist bones).
 
 ---
 
 ## 2. UML Class Diagram
-
-The following diagram illustrates the core components, data structures, and their relationships:
 
 ```mermaid
 classDiagram
@@ -40,44 +38,68 @@ classDiagram
         RightRing
     }
 
-    class ItemSlotRestriction {
+    class EquipResultStatus {
         <<enumeration>>
-        SpecificSlotOnly
-        OneHanded
-        TwoHanded
-        OffHandOnly
-        MainHandOnly
-        AnyRing
+        Success
+        InvalidSlot
+        SlotOccupied
+        MissingPrefab
+        MissingBone
+        IncompatibleRig
+    }
+
+    class EquipResult {
+        +EquipResultStatus Status
+        +EquippedItemInstance Instance
+        +string ErrorMessage
+        +bool IsSuccess
     }
 
     class WardrobeItemSO {
+        -string itemId
         -string itemName
-        -ItemSlotRestriction restriction
-        -EquipmentSlot targetSlot
+        -List~EquipmentSlot~ allowedSlots
+        -List~EquipmentSlot~ additionalOccupiedSlots
         -Sprite icon
         -GameObject itemPrefab
+        +string ItemId
         +string ItemName
-        +EquipmentSlot TargetSlot
+        +IReadOnlyList~EquipmentSlot~ AllowedSlots
+        +IReadOnlyList~EquipmentSlot~ AdditionalOccupiedSlots
         +Sprite Icon
         +GameObject ItemPrefab
-        +ItemSlotRestriction Restriction
-        +CanFitInSlot(EquipmentSlot slot) bool
+        +CanEquipIntoSlot(EquipmentSlot slot) bool
+        +GetOccupiedSlots(EquipmentSlot requestedSlot) List~EquipmentSlot~
+    }
+
+    class EquippedItemInstance {
+        +WardrobeItemSO ItemData
+        +GameObject InstanceObject
+        +EquipmentSlot PrimarySlot
+        +IReadOnlyList~EquipmentSlot~ OccupiedSlots
+        +bool OccupiesSlot(EquipmentSlot slot) bool
+    }
+
+    class EquipmentRuleResolver {
+        +CanEquip(WardrobeItemSO item, EquipmentSlot requestedSlot, IReadOnlyDictionary~EquipmentSlot, EquippedItemInstance~ currentSlots) EquipResultStatus
+        +ResolveConflictingSlots(WardrobeItemSO item, EquipmentSlot requestedSlot, IReadOnlyDictionary~EquipmentSlot, EquippedItemInstance~ currentSlots) List~EquipmentSlot~
     }
 
     class WardrobeManager {
         -Animator _animator
-        -Dictionary~EquipmentSlot, GameObject~ _equipmentItems
-        -Dictionary~EquipmentSlot, WardrobeItemSO~ _equipmentItemData
-        +List~DefaultEquipment~ defaultLoadout
-        +event Action~EquipmentSlot, GameObject~ OnEquipmentChanged
-        +Equip(EquipmentSlot slot, GameObject prefab) GameObject
-        +EquipItemSO(WardrobeItemSO itemSO, EquipmentSlot slot) GameObject
-        +Unequip(EquipmentSlot slot) void
+        -Dictionary~EquipmentSlot, EquippedItemInstance~ _slotToInstance
+        -List~EquippedItemInstance~ _equippedInstances
+        +event Action~EquipmentSlot, WardrobeItemSO, GameObject~ OnItemEquipped
+        +event Action~EquipmentSlot, WardrobeItemSO~ OnItemUnequipped
+        +event Action~WardrobeLoadout~ OnLoadoutChanged
+        +Equip(WardrobeItemSO item, EquipmentSlot slot) EquipResult
+        +Unequip(EquipmentSlot slot) bool
         +UnequipAll() void
-        +GetEquippedItem(EquipmentSlot slot) GameObject
+        +IsSlotOccupied(EquipmentSlot slot) bool
+        +GetEquippedInstance(EquipmentSlot slot) EquippedItemInstance
         +GetEquippedItemData(EquipmentSlot slot) WardrobeItemSO
-        +GetDefaultBoneForSlot(EquipmentSlot slot)$ HumanBodyBones
-        -EquipInternal(EquipmentSlot slot, GameObject prefab, WardrobeItemSO itemSO) GameObject
+        +GetCurrentLoadout() WardrobeLoadout
+        +ApplyLoadout(WardrobeLoadout loadout, Func~string, WardrobeItemSO~ itemResolver) void
     }
 
     class SkinnedMeshRemapper {
@@ -93,187 +115,156 @@ classDiagram
         -Vector3 localRotation
         -Vector3 localScale
         -bool autoMirrorForLeftSlot
-        +bool UseCustomBone
-        +HumanBodyBones TargetBone
-        +Vector3 LocalPosition
-        +Vector3 LocalRotation
-        +Vector3 LocalScale
         +ApplyOffsets(bool isLeftSlot) void
     }
 
     class WardrobeLoadout {
-        +List~EquippedSlotEntry~ items
+        +List~EquippedSlotEntry~ entries
         +ToJson() string
         +FromJson(string json)$ WardrobeLoadout
     }
 
     class EquippedSlotEntry {
         +EquipmentSlot slot
-        +string itemKey
+        +string itemId
     }
 
-    class IWardrobeInventoryProvider {
-        <<interface>>
-        +GetAvailableItems() IReadOnlyList~WardrobeItemSO~
-        +CanEquipItem(WardrobeItemSO item, EquipmentSlot slot) bool
-        +NotifyItemEquipped(WardrobeItemSO item, EquipmentSlot slot) void
-        +NotifyItemUnequipped(WardrobeItemSO item, EquipmentSlot slot) void
-    }
-
-    WardrobeManager "1" --> "*" WardrobeItemSO : tracks equipped
-    WardrobeManager ..> EquipmentSlot : uses
-    WardrobeItemSO ..> ItemSlotRestriction : uses
-    WardrobeItemSO ..> EquipmentSlot : target
+    WardrobeManager "1" *-- "*" EquippedItemInstance : manages
+    EquippedItemInstance "1" o-- "1" WardrobeItemSO : references
+    WardrobeManager ..> EquipmentRuleResolver : validates via
+    WardrobeManager ..> EquipResult : returns
+    WardrobeManager ..> SkinnedMeshRemapper : executes
+    WardrobeManager ..> HumanoidAttachmentPoint : executes
     WardrobeLoadout "1" *-- "*" EquippedSlotEntry : contains
-    EquippedSlotEntry ..> EquipmentSlot : references
-
-    WardrobeManager ..> SkinnedMeshRemapper : invokes on spawn
-    WardrobeManager ..> HumanoidAttachmentPoint : invokes on spawn
+    EquippedSlotEntry ..> EquipmentSlot : uses
+    WardrobeItemSO ..> EquipmentSlot : uses
 ```
 
 ---
 
-## 3. Sequence Diagrams
+## 3. Multi-Slot Occupancy Model
 
-### 3.1. Equipping a Skinned Mesh Item (Clothing / Armor)
+In standard RPG equipment models, weapons such as Greatswords or Staves are "Two-Handed": they are initiated in `MainHand`, but logically and visually occupy both `MainHand` and `OffHand`.
+
+### How Multi-Slot Occupancy Works
+1. When `GreatSword` is equipped into `MainHand`:
+   * `WardrobeItemSO.AllowedSlots` = `[MainHand]`.
+   * `WardrobeItemSO.AdditionalOccupiedSlots` = `[OffHand]`.
+   * The resolver identifies that both `MainHand` and `OffHand` will be occupied.
+   * Any item already in `OffHand` (or `MainHand`) is unequipped first.
+   * A single `EquippedItemInstance` is created holding the spawned 3D weapon GameObject.
+   * Both slots point to this single instance:
+     ```text
+     _slotToInstance[MainHand] ──► [EquippedItemInstance (GreatSword)]
+     _slotToInstance[OffHand]  ──► [EquippedItemInstance (GreatSword)]
+     ```
+2. **Atomic Unequip**: Calling `Unequip(EquipmentSlot.OffHand)` or `Unequip(EquipmentSlot.MainHand)` removes both slot references, destroys the visual GameObject once, and fires `OnItemUnequipped` cleanly.
+3. **Predictable Querying**: `IsSlotOccupied(EquipmentSlot.OffHand)` returns `true` and returns the `GreatSword` instance, preventing conflicting equipment or empty off-hand anomalies.
+
+---
+
+## 4. Sequence Diagrams
+
+### 4.1. Equipping a Two-Handed Weapon (Multi-Slot Flow)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Caller as Game / UI Controller
+    participant Game as Host Game / Inventory
     participant WM as WardrobeManager
-    participant Prefab as Clothing Prefab
-    participant SMR as SkinnedMeshRemapper
-    participant Host as Character Skeleton
+    participant Rule as EquipmentRuleResolver
+    participant Inst as EquippedItemInstance
+    participant Prefab as Weapon GameObject
 
-    Caller->>WM: EquipItemSO(itemSO, EquipmentSlot.Chest)
-    WM->>WM: Validate Slot & Restriction Rules
-    WM->>WM: Unequip(EquipmentSlot.Chest)
-    WM->>Prefab: Instantiate(itemSO.ItemPrefab, hostTransform)
-    WM->>SMR: TryGetComponent<SkinnedMeshRemapper>()
-    activate SMR
-    WM->>SMR: Remap(hostAnimator.transform)
-    SMR->>Host: BuildBoneMapRecursive(targetSkeletonRoot)
-    loop Each SkinnedMeshRenderer
-        SMR->>Host: Map clothingRenderer.bones to Host Bones
-        SMR->>SMR: Set clothingRenderer.rootBone = Target Hips
+    Game->>WM: Equip(greatSwordSO, EquipmentSlot.MainHand)
+    WM->>Rule: CanEquip(greatSwordSO, MainHand, _slotToInstance)
+    Rule-->>WM: EquipResultStatus.Success
+    WM->>Rule: ResolveConflictingSlots(greatSwordSO, MainHand, _slotToInstance)
+    Rule-->>WM: [MainHand, OffHand]
+    loop Each Conflicting Slot (e.g. OffHand Shield)
+        WM->>WM: Unequip(slot)
     end
-    SMR->>SMR: CleanupDuplicateSkeleton()
-    deactivate SMR
-    WM->>WM: Cache instance & SO data
-    WM-->>Caller: Fire OnEquipmentChanged(slot, spawnedInstance)
+    WM->>Prefab: Instantiate(greatSwordSO.ItemPrefab, hostTransform)
+    WM->>Prefab: Configure HumanoidAttachmentPoint (RightHand)
+    WM->>Inst: new EquippedItemInstance(greatSwordSO, Prefab, [MainHand, OffHand])
+    WM->>WM: _slotToInstance[MainHand] = Inst
+    WM->>WM: _slotToInstance[OffHand] = Inst
+    WM-->>Game: Fire OnItemEquipped(MainHand, greatSwordSO, Prefab)
+    WM-->>Game: Fire OnLoadoutChanged(newLoadout)
+    WM-->>Game: Return EquipResult(Success, Inst)
 ```
 
-### 3.2. Equipping a Rigid Prop Item (Weapons / Accessories)
+### 4.2. Runtime Persistence & Loadout Rehydration
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Caller as Game / UI Controller
+    participant Session as Game Session / Save Data
+    participant PlayerPrefab as Spawned Player Character
     participant WM as WardrobeManager
-    participant Prefab as Weapon Prefab
-    participant AP as HumanoidAttachmentPoint
-    participant Anim as Host Animator
+    participant Resolver as Item Database / Addressables
 
-    Caller->>WM: EquipItemSO(itemSO, EquipmentSlot.MainHand)
-    WM->>WM: Check 2H Conflicts (Unequip OffHand if 2H)
-    WM->>Prefab: Instantiate(itemSO.ItemPrefab, hostTransform)
-    WM->>AP: TryGetComponent<HumanoidAttachmentPoint>()
-    activate AP
-    WM->>Anim: GetBoneTransform(targetBone)
-    Anim-->>WM: Transform (RightHand Bone)
-    WM->>Prefab: SetParent(boneTransform, false)
-    WM->>AP: ApplyOffsets(isLeftSlot: false)
-    AP->>Prefab: Set localPosition, localRotation, localScale
-    deactivate AP
-    WM->>WM: Cache instance & SO data
-    WM-->>Caller: Fire OnEquipmentChanged(slot, spawnedInstance)
-```
-
-### 3.3. Persistence Flow (Save & Restore Across Scenes)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant SceneA as Wardrobe Scene
-    participant WM as WardrobeManager
-    participant SaveSystem as Game Save / PlayerPrefs
-    participant SceneB as Gameplay Level (Spawned Player)
-
-    SceneA->>WM: Player equips items in Wardrobe
-    SceneA->>WM: GetCurrentLoadout()
-    WM-->>SceneA: WardrobeLoadout (Serializable DTO)
-    SceneA->>SaveSystem: SaveLoadout(loadout.ToJson())
-
-    Note over SaveSystem, SceneB: Level Transition / Scene Load
-
-    SceneB->>SaveSystem: LoadLoadout()
-    SaveSystem-->>SceneB: JSON string
-    SceneB->>SceneB: WardrobeLoadout.FromJson(json)
-    SceneB->>WM: ApplyLoadout(loadedLoadout)
-    loop Each slot entry in loadout
-        SceneB->>WM: EquipItemSO(resolvedItemSO, entry.slot)
+    Session->>PlayerPrefab: Instantiate on Level Load
+    Session->>WM: ApplyLoadout(savedLoadout, itemResolver)
+    WM->>WM: UnequipAll()
+    loop Each entry in savedLoadout.entries
+        WM->>Resolver: ResolveItem(entry.itemId)
+        Resolver-->>WM: WardrobeItemSO
+        WM->>WM: Equip(resolvedItemSO, entry.slot)
     end
+    WM-->>Session: Fire OnLoadoutChanged
 ```
 
 ---
 
-## 4. Architectural Layers & Separation of Concerns
-
-The module divides responsibilities into three distinct layers:
+## 5. Architectural Boundaries & Data Flow
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                        GAMEPLAY LAYER                        │
-│   (Player Stats, Save System, Inventory Model, Game Rules)   │
-└──────────────────────────────┬───────────────────────────────┘
-                               │ Event Subscription & Loadout DTO
+┌─────────────────────────────────────────────────────────────┐
+│                       HOST GAME LAYER                       │
+│     (Game Inventory, Character Stats, Save/Load System)     │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Calls Equip / ApplyLoadout
                                ▼
-┌──────────────────────────────────────────────────────────────┐
-│                    WARDROBE CORE PACKAGE                     │
-│               (Neymanoff.HumanoidWardrobe)                  │
-│                                                              │
-│  ┌───────────────────────┐        ┌───────────────────────┐  │
-│  │    WardrobeManager    │        │    WardrobeItemSO     │  │
-│  │ (Runtime Controller)  │        │   (Item Data Model)   │  │
-│  └───────────┬───────────┘        └───────────────────────┘  │
-│              │                                               │
-│       ┌──────┴──────────────┐                                │
-│       ▼                     ▼                                │
-│ ┌──────────────────┐  ┌───────────────────────────┐          │
-│ │SkinnedMeshRemapper│  │  HumanoidAttachmentPoint  │          │
-│ │(Deforming Meshes)│  │ (Socket Bone Attachments) │          │
-│ └──────────────────┘  └───────────────────────────┘          │
-└──────────────────────────────────────────────────────────────┘
-                               ▲
-                               │ UI Binding
-┌──────────────────────────────┴───────────────────────────────┐
-│                    OPTIONAL SAMPLES / UI                     │
-│             (Neymanoff.HumanoidWardrobe.UI)                 │
-│      (DemoInventoryUI, EquipmentSlotUI, Turntable)           │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    WARDROBE CORE PACKAGE                    │
+│                                                             │
+│   ┌────────────────────────┐     ┌──────────────────────┐   │
+│   │ EquipmentRuleResolver  │◄────┤   WardrobeItemSO     │   │
+│   │  (Conflict & Slots)    │     │   (Stable ItemId)    │   │
+│   └───────────┬────────────┘     └──────────────────────┘   │
+│               │                                             │
+│               ▼                                             │
+│   ┌────────────────────────┐     ┌──────────────────────┐   │
+│   │    WardrobeManager     │────►│ EquippedItemInstance │   │
+│   │ (Visual & State Mgmt)  │     │(Multi-slot reference)│   │
+│   └───────────┬────────────┘     └──────────────────────┘   │
+│               │                                             │
+│       ┌───────┴──────────────┐                              │
+│       ▼                      ▼                              │
+│ ┌──────────────────┐   ┌───────────────────────────┐        │
+│ │SkinnedMeshRemapper│  │  HumanoidAttachmentPoint  │        │
+│ │ (Remap to Hips)  │   │   (Bone socket offsets)   │        │
+│ └──────────────────┘   └───────────────────────────┘        │
+└─────────────────────────────────────────────────────────────┘
+                               │ Outward Events Only
+                               ▼
+               OnItemEquipped / OnItemUnequipped
+                       OnLoadoutChanged
 ```
 
-### 4.1. Core Layer (`Neymanoff.HumanoidWardrobe`)
-* Completely isolated from UI and external game systems.
-* Relies only on standard Unity engine modules (`UnityEngine.CoreModule`, `UnityEngine.AnimationModule`).
-* Exposes clean events (`OnEquipmentChanged`) and public methods (`EquipItemSO`, `Unequip`, `GetCurrentLoadout`).
-
-### 4.2. UI / Sample Layer (`Neymanoff.HumanoidWardrobe.UI`)
-* Provides an out-of-the-box paper-doll equipment UI and grid selector.
-* Listens to `WardrobeManager` events to refresh slots dynamically.
-* Can be deleted or replaced entirely without affecting core wardrobe logic.
+### Outward-Only Notification
+* The Wardrobe Core **never calls into the host game's inventory**.
+* The host game controls the wardrobe by calling `Equip` / `Unequip`.
+* The wardrobe communicates changes outward exclusively via events:
+  * `OnItemEquipped(EquipmentSlot primarySlot, WardrobeItemSO item, GameObject instance)`
+  * `OnItemUnequipped(EquipmentSlot primarySlot, WardrobeItemSO item)`
+  * `OnLoadoutChanged(WardrobeLoadout currentLoadout)`
 
 ---
 
-## 5. Technical Considerations & Performance
+## 6. Future Expansion Points (Roadmap Alignment)
 
-### 5.1. Skinned Mesh Culling & Bounds
-* Standard Unity skinned meshes calculate frustum culling based on their `rootBone` and `localBounds`.
-* When clothing is remapped, `rootBone` must be bound to the skeleton's root bone (e.g. `Hips` or `spine`), **not** the character's GameObject origin.
-* If a mesh causes clipping or premature culling, `SkinnedMeshRenderer.updateWhenOffscreen` or copying `localBounds` from the host body mesh guarantees stable rendering.
-
-### 5.2. Garbage Collection & Memory Management
-* `SkinnedMeshRemapper` only runs once per item instantiation.
-* Transform dictionaries are allocated locally during the remap routine and discarded immediately after setup.
-* Unused skeleton nodes from clothing prefabs are systematically removed (`Destroy` in Play Mode, `DestroyImmediate` in Editor Mode) to avoid hierarchy bloat and overhead during animation updates.
+1. **`WardrobeRigProfile`**: ScriptableObject mapping per-rig socket offsets (e.g. Orc vs Dwarf vs Elf), custom bone aliases, and bounds presets.
+2. **Body Coverage & Mesh Clipping (`HideBodyParts`)**: Declarative flags on `WardrobeItemSO` (e.g. `HideTorso`, `HideLegs`) to toggle sub-mesh visibility or swap body geometry to prevent skin poke-through.
+3. **Rig Remap Profile**: Explicit bone-to-bone alias mapping to handle non-standard twist/helper bones across different modeling DCCs.

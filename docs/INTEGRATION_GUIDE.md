@@ -1,209 +1,185 @@
 # Universal Humanoid Wardrobe — Integration & User Guide
 
-This guide walks you through integrating the **Universal Humanoid Wardrobe** package into your Unity project, setting up humanoid characters, configuring clothing and weapons, connecting to game inventory systems, and saving equipment state across scenes.
+This guide walks you through integrating the **Universal Humanoid Wardrobe** package into your Unity project, authoring equippable items, handling equipment persistence, and listening to wardrobe events.
 
 ---
 
 ## 1. Character Setup
 
-The package works with any 3D model rigged to Unity's standard **Humanoid** avatar.
-
 ### Step 1.1: Verify Model Import Settings
 1. Select your character model file (`.fbx`) in the Project view.
 2. In the Inspector, navigate to the **Rig** tab.
 3. Ensure **Animation Type** is set to **Humanoid**.
-4. Click **Configure...** to ensure all required bones (Hips, Spine, Head, Arms, Legs) are mapped correctly without errors.
+4. Click **Configure...** to ensure all standard humanoid bones (Hips, Spine, Head, Arms, Legs) are mapped cleanly.
+
+> [!NOTE]
+> **Compatibility Note**: Rigid items (weapons, props, helmets) attach universally to any valid Humanoid avatar. Skinned clothing meshes require matching rest poses and compatible bone proportions with your host character model.
 
 ### Step 1.2: Add `WardrobeManager`
-1. Open your character prefab or select the character instance in your scene.
-2. Ensure the root GameObject contains an `Animator` component with a valid Humanoid Avatar.
-3. Add the `WardrobeManager` component:
-   * Click **Add Component** > search for **WardrobeManager** (or find it under `Humanoid Wardrobe/WardrobeManager`).
-4. *(Optional)* Configure the **Default Loadout** list with items you want equipped automatically on game start.
+1. Select your character prefab or instance.
+2. Ensure the GameObject contains an `Animator` component with a Humanoid avatar.
+3. Add the `WardrobeManager` component.
 
 ---
 
-## 2. Creating Equippable Items
+## 2. Authoring Equippable Items
 
-The wardrobe system supports two item categories:
-1. **Skinned Clothing & Armor** (meshes that deform with body animations).
-2. **Rigid Props & Weapons** (static objects attached to specific bones).
+### Step 2.1: Creating `WardrobeItemSO`
+Each item in your game is represented by a `WardrobeItemSO` ScriptableObject:
 
----
-
-### Step 2.1: Creating Skinned Clothing / Armor
-Skinned meshes (e.g. chest armor, pants, boots, gloves) must share the same bone structure and proportions as your base humanoid rig.
-
-1. **Export from 3D Software**: Export your clothing mesh rigged to the standard skeleton as an FBX file.
-2. **Import into Unity**:
-   * Set the Rig tab to **Humanoid** (recommended) or ensure bone naming matches your base character.
-3. **Create the Prefab**:
-   * Drag the FBX into your scene, unpack or create a Prefab Variant.
-   * Add the `SkinnedMeshRemapper` component to the root of the prefab.
-4. **Configure Bounding & Culling**:
-   * Ensure `SkinnedMeshRenderer` components on your clothing have appropriate materials assigned.
-   * The `SkinnedMeshRemapper` will automatically bind the bones to the target character skeleton at runtime and clean up duplicate bone nodes.
+1. Right-click in Project view > **Create** > **Humanoid Wardrobe** > **Wardrobe Item**.
+2. Configure core fields:
+   * **Item Id**: A permanent, unique string identifier (e.g. `armor_chest_slavic_001`, `weapon_sword_iron_01`). **Never rely on asset filenames for save games.**
+   * **Item Name**: In-game display name.
+   * **Allowed Slots**: The slots this item can legally be equipped into (e.g. `MainHand` and `OffHand` for a versatile one-handed sword; `LeftRing` and `RightRing` for rings).
+   * **Additional Occupied Slots**: Slots additionally occupied when equipped (e.g., for Two-Handed weapons, add `OffHand`).
+   * **Icon**: UI sprite for inventory screens.
+   * **Item Prefab**: The 3D prefab to spawn.
 
 ---
 
-### Step 2.2: Creating Rigid Weapons, Props & Accessories
-Rigid items (e.g. swords, shields, staves, rings, static helmets) attach directly to a specific humanoid bone socket.
+### Step 2.2: Creating Skinned Clothing & Armor
+For items that deform with the body (tunics, pants, boots, gloves):
 
-1. **Create the Prefab**:
-   * Create a prefab containing your prop mesh, colliders, and materials.
-2. **Add `HumanoidAttachmentPoint`**:
-   * Add the `HumanoidAttachmentPoint` component to the root of the prefab.
-3. **Configure Offsets**:
-   * **Target Bone**: Choose the default bone (e.g., `RightHand` for swords, `LeftHand` for shields, `Head` for helmets).
-   * **Local Position / Rotation / Scale**: Adjust offsets so the item aligns with the character's hand grip or head.
-   * **Auto Mirror for Left Slot**: When enabled, the X position and Y/Z rotation are automatically inverted when equipped in `OffHand` or `LeftRing`.
-4. **Tip — Capture Offsets in Editor**:
-   * Place the item temporarily under the character's hand bone in the scene view.
-   * Position and rotate it visually until it looks perfect.
-   * Right-click the `HumanoidAttachmentPoint` component and select **Capture Current Transform as Offsets**.
-   * Apply changes back to the prefab!
+1. Export the clothing rigged to the same skeleton template as your character.
+2. Create a Prefab from the imported FBX.
+3. Add the `SkinnedMeshRemapper` component to the root of the prefab.
+4. The remapper automatically reparents and maps bones to the host character's skeleton at runtime and ensures `rootBone` evaluates relative to the skeleton's root bone (`Hips`).
 
 ---
 
-### Step 2.3: Creating `WardrobeItemSO` (ScriptableObject)
-Each equippable item has an associated `WardrobeItemSO` asset defining its metadata and equipping rules:
+### Step 2.3: Creating Rigid Weapons, Props & Accessories
+For items attached to bone sockets (swords, shields, jewelry, helmets):
 
-1. Right-click in the Project view > **Create** > **Humanoid Wardrobe** > **Wardrobe Item**.
-2. Configure properties:
-   * **Item Name**: Display name (e.g. "Slavic Chest Armor").
-   * **Restriction**:
-     * `SpecificSlotOnly`: Standard single-slot items (Chest, Legs, Boots).
-     * `OneHanded`: Fits either `MainHand` or `OffHand`.
-     * `TwoHanded`: Equips into `MainHand` and automatically clears `OffHand`.
-     * `AnyRing`: Fits either `LeftRing` or `RightRing`.
-   * **Target Slot**: The primary `EquipmentSlot` for this item.
-   * **Icon**: 2D UI Sprite for inventory grids and paper-doll silhouettes.
-   * **Item Prefab**: The prefab created in Step 2.1 or 2.2.
+1. Create a prefab containing your item mesh and colliders.
+2. Add the `HumanoidAttachmentPoint` component to the root.
+3. In the Inspector, configure:
+   * **Target Bone**: Default humanoid bone (e.g. `RightHand`, `Head`).
+   * **Offsets**: Local position, rotation, and scale relative to the socket.
+   * **Auto Mirror for Left Slot**: Inverts X position and Y/Z rotation when equipped into `OffHand` or `LeftRing`.
+4. **Tip — Capture Offsets in Scene**:
+   * Temporarily place the weapon under your character's hand bone in the scene.
+   * Align it visually.
+   * Right-click `HumanoidAttachmentPoint` in the Inspector > **Capture Current Transform as Offsets**.
+   * Apply overrides to the prefab.
 
 ---
 
-## 3. Integrating with Your Game Systems
+## 3. Integrating with Gameplay & Inventory
 
-The wardrobe module is designed to integrate cleanly with any gameplay codebase.
+The Wardrobe package is strictly **outward-notifying**: your game controls the wardrobe, and the wardrobe fires clean C# events.
 
-### 3.1. Listening to Equipment Changes
-Subscribe to `OnEquipmentChanged` to update player stats, trigger audio, or spawn particles:
+### 3.1. Equipping an Item & Handling `EquipResult`
+Call `Equip` with the target item and requested slot. The method returns a detailed `EquipResult`:
 
 ```csharp
 using UnityEngine;
 using Neymanoff.HumanoidWardrobe;
 
-public class PlayerEquipmentBridge : MonoBehaviour
+public class InventoryEquipmentController : MonoBehaviour
 {
     [SerializeField] private WardrobeManager wardrobeManager;
 
+    public void TryEquipFromInventory(WardrobeItemSO itemSO, EquipmentSlot slot)
+    {
+        EquipResult result = wardrobeManager.Equip(itemSO, slot);
+
+        if (result.IsSuccess)
+        {
+            Debug.Log($"Successfully equipped {itemSO.ItemName} in {slot}!");
+        }
+        else
+        {
+            Debug.LogWarning($"Equip failed ({result.Status}): {result.ErrorMessage}");
+            // e.g. Notify UI that slot is occupied or invalid
+        }
+    }
+}
+```
+
+---
+
+### 3.2. Subscribing to Wardrobe Events
+Listen to wardrobe events to update character stats, play audio, or recalculate armor ratings:
+
+```csharp
+using UnityEngine;
+using Neymanoff.HumanoidWardrobe;
+
+public class CharacterStatsBridge : MonoBehaviour
+{
+    [SerializeField] private WardrobeManager wardrobe;
+
     private void OnEnable()
     {
-        wardrobeManager.OnEquipmentChanged += HandleEquipmentChanged;
+        wardrobe.OnItemEquipped += HandleItemEquipped;
+        wardrobe.OnItemUnequipped += HandleItemUnequipped;
+        wardrobe.OnLoadoutChanged += HandleLoadoutChanged;
     }
 
     private void OnDisable()
     {
-        wardrobeManager.OnEquipmentChanged -= HandleEquipmentChanged;
+        wardrobe.OnItemEquipped -= HandleItemEquipped;
+        wardrobe.OnItemUnequipped -= HandleItemUnequipped;
+        wardrobe.OnLoadoutChanged -= HandleLoadoutChanged;
     }
 
-    private void HandleEquipmentChanged(EquipmentSlot slot, GameObject spawnedInstance)
+    private void HandleItemEquipped(EquipmentSlot slot, WardrobeItemSO item, GameObject instance)
     {
-        WardrobeItemSO itemData = wardrobeManager.GetEquippedItemData(slot);
+        Debug.Log($"[Stats] Applied modifiers for {item.ItemName} on {slot}");
+    }
 
-        if (spawnedInstance != null && itemData != null)
-        {
-            Debug.Log($"[Game] Equipped {itemData.ItemName} in slot {slot}. Applying stats!");
-            // e.g. playerStats.AddArmor(itemData.ArmorValue);
-        }
-        else
-        {
-            Debug.Log($"[Game] Unequipped item in slot {slot}. Removing stats!");
-            // e.g. playerStats.RemoveArmor(...);
-        }
+    private void HandleItemUnequipped(EquipmentSlot slot, WardrobeItemSO item)
+    {
+        // Safe: item is passed directly even though the GameObject is already destroyed
+        Debug.Log($"[Stats] Removed modifiers for {item.ItemName} from {slot}");
+    }
+
+    private void HandleLoadoutChanged(WardrobeLoadout loadout)
+    {
+        Debug.Log($"[SaveSystem] Loadout updated with {loadout.entries.Count} items.");
     }
 }
 ```
 
 ---
 
-### 3.2. Equipping from an Inventory
-When the player selects an item in your game's inventory UI:
+## 4. Cross-Scene Persistence (Save & Load)
+
+The recommended pattern for persistence is **Loadout Rehydration** via stable `ItemId`s.
+
+### Saving the Loadout
+Extract the lightweight serializable DTO:
 
 ```csharp
-public void OnPlayerClickInventoryItem(WardrobeItemSO selectedItem)
-{
-    // Equips the item into its designated slot with rule checking
-    GameObject instance = wardrobeManager.EquipItemSO(selectedItem, selectedItem.TargetSlot);
+WardrobeLoadout loadout = wardrobeManager.GetCurrentLoadout();
+string json = loadout.ToJson();
+// Save `json` into PlayerPrefs, cloud save, or game save file
+```
 
-    if (instance == null)
-    {
-        Debug.LogWarning("Failed to equip item (slot conflict or invalid item)");
-    }
+Example serialized JSON:
+```json
+{
+  "entries": [
+    { "slot": 0, "itemId": "helmet_slavic_001" },
+    { "slot": 2, "itemId": "armor_chest_slavic_001" },
+    { "slot": 8, "itemId": "weapon_greatsword_iron_001" }
+  ]
 }
 ```
 
----
+### Loading & Rehydrating on Character Spawn
+When the player spawns into a new level:
 
-## 4. Cross-Scene Persistence & Save Systems
-
-To keep equipped items throughout your entire game:
-
-### Approach A: Seamless Scene Carryover (`DontDestroyOnLoad`)
-If your character moves between scenes (e.g., from character creation to Level 1):
 ```csharp
-void Awake()
+public void InitializeCharacterLoadout(WardrobeManager characterWardrobe, string savedJson)
 {
-    DontDestroyOnLoad(gameObject);
-}
-```
-All remapped clothing meshes and attached bone sockets are child GameObjects of the character and **automatically persist** into the new scene.
+    WardrobeLoadout loadout = WardrobeLoadout.FromJson(savedJson);
 
----
-
-### Approach B: Loadout Rehydration (Save & Load)
-For games where the player is spawned from a prefab on each level:
-
-1. **Extract Loadout on Save**:
-```csharp
-[System.Serializable]
-public class SavedEquipmentSlot
-{
-    public EquipmentSlot slot;
-    public string itemResourcePath; // Or database ID
-}
-
-public List<SavedEquipmentSlot> SavePlayerEquipment(WardrobeManager manager)
-{
-    List<SavedEquipmentSlot> savedList = new();
-    foreach (EquipmentSlot slot in System.Enum.GetValues(typeof(EquipmentSlot)))
-    {
-        WardrobeItemSO itemData = manager.GetEquippedItemData(slot);
-        if (itemData != null)
-        {
-            savedList.Add(new SavedEquipmentSlot {
-                slot = slot,
-                itemResourcePath = itemData.name
-            });
-        }
-    }
-    return savedList;
-}
-```
-
-2. **Restore Loadout on Spawn**:
-```csharp
-public void RestorePlayerEquipment(WardrobeManager manager, List<SavedEquipmentSlot> savedData)
-{
-    manager.UnequipAll();
-    foreach (var entry in savedData)
-    {
-        WardrobeItemSO itemSO = Resources.Load<WardrobeItemSO>($"Items/{entry.itemResourcePath}");
-        if (itemSO != null)
-        {
-            manager.EquipItemSO(itemSO, entry.slot);
-        }
-    }
+    // Pass an item resolver (e.g. your Addressables manager or ScriptableObject catalog)
+    characterWardrobe.ApplyLoadout(loadout, itemId => {
+        return itemCatalog.GetItemById(itemId);
+    });
 }
 ```
 
@@ -211,24 +187,8 @@ public void RestorePlayerEquipment(WardrobeManager manager, List<SavedEquipmentS
 
 ## 5. In-Editor Preview Workflow
 
-You don't need to enter Play Mode to inspect character outfits:
-1. Select your character in the Scene hierarchy.
-2. In the `WardrobeManager` inspector, populate the **Default Loadout** list.
-3. Click **Preview Default Loadout**: the items will instantiate and bind to the skeleton directly in the Scene View.
-4. Click **Clear Preview** to remove preview instances.
-
----
-
-## 6. Troubleshooting FAQ
-
-#### Q: The clothing mesh disappears or flickers when moving the camera.
-* **Cause**: Frustum culling mismatch because the `rootBone` is evaluated at the floor origin.
-* **Fix**: Ensure `clothingRenderer.rootBone` is set to the skeleton's root bone (e.g. `Hips`), or enable `clothingRenderer.updateWhenOffscreen = true` in the Inspector.
-
-#### Q: Models and textures show up pink or missing after cloning.
-* **Cause**: Git LFS binary download failure (404 error from remote LFS server).
-* **Fix**: Copy the original FBX and PNG files into the respective `Assets/3D_Models/...` directories. Because the `.meta` files are preserved, Unity will instantly reconnect all GUID references.
-
-#### Q: Remapped clothing doesn't follow leg/arm animations.
-* **Cause**: Bone name mismatch between clothing FBX and character FBX (e.g. Blender `spine.001` vs Mixamo `mixamorig:Spine`).
-* **Fix**: Export the clothing using the same skeleton bone names as your target humanoid character, or verify that both models share the same rig template.
+Inspect character outfits directly in the Scene view:
+1. Select your character in the hierarchy.
+2. In the `WardrobeManager` inspector, configure the **Default Loadout**.
+3. Click **Preview Default Loadout** to instantiate preview objects.
+4. Click **Clear Preview** to cleanly remove instances without scene hierarchy leaks.

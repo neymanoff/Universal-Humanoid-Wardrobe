@@ -52,8 +52,18 @@ namespace Neymanoff.HumanoidWardrobe
                 }
                 
                 clothingRenderer.bones = newBones;
-                
-                clothingRenderer.rootBone = targetSkeletonRoot;
+
+                Transform targetRootBone = null;
+                if (clothingRenderer.rootBone != null && targetBoneMap.TryGetValue(clothingRenderer.rootBone.name, out Transform matchingRoot))
+                {
+                    targetRootBone = matchingRoot;
+                }
+                else if (animator != null && animator.isHuman)
+                {
+                    targetRootBone = animator.GetBoneTransform(HumanBodyBones.Hips);
+                }
+
+                clothingRenderer.rootBone = targetRootBone != null ? targetRootBone : targetSkeletonRoot;
             }
 
             CleanupDuplicateSkeleton();

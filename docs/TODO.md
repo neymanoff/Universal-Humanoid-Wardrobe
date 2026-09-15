@@ -1,110 +1,127 @@
 # Universal Humanoid Wardrobe — Project Roadmap & Task Tracker
 
-This document tracks all completed work, active development items, and upcoming milestones required to bring the **Universal Humanoid Wardrobe** package to release readiness on the Unity Asset Store.
+This document tracks all active development items, architectural milestones, and verification tasks required to bring the **Universal Humanoid Wardrobe** package to production readiness.
+
+For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEVELOPMENT.md).
 
 ---
 
-## 🚀 Progress Overview
+## 🚀 Active Milestones
 
-| Phase | Description | Status | Completion |
+| Phase | Milestone | Priority | Status |
 | :--- | :--- | :---: | :---: |
-| **Phase 1** | Repository Recovery, Stabilization & Cleanup | ✅ Done | 100% |
-| **Phase 2** | Core Engine Improvements & Rig Robustness | 🔄 In Progress | 40% |
-| **Phase 3** | Persistence, Serialization & Game API | ⏳ Next | 0% |
-| **Phase 4** | UPM Samples & Demo Decoupling | 📋 Planned | 0% |
-| **Phase 5** | Automated Tests (EditMode & PlayMode) | 📋 Planned | 0% |
-| **Phase 6** | Asset Store Submission & Packaging | 📋 Planned | 0% |
+| **Phase 1** | Immediate Core Architecture Refactoring | 🔴 Critical | 🔄 In Progress |
+| **Phase 2** | Rig Robustness & Bone Remapping | 🟡 High | ⏳ Next |
+| **Phase 3** | Loadout Persistence & DTO Serialization | 🟡 High | 📋 Planned |
+| **Phase 4** | UPM Samples Separation | 🟢 Medium | 📋 Planned |
+| **Phase 5** | Comprehensive Automated Test Suite | 🔴 Critical | 📋 Planned |
+| **Phase 6** | Advanced Features (Rig Profiles & Body Masking) | 🟢 Medium | 📋 Planned |
+| **Phase 7** | Asset Store Submission & Polish | 🔵 Release | 📋 Planned |
 
 ---
 
-## Phase 1: Repository Recovery & Stabilization (✅ Done)
+## Phase 1: Immediate Core Architecture Refactoring (🔄 In Progress)
 
-- [x] **Diagnose Git LFS 404 Issue**: Identified missing remote LFS binaries on GitHub remote.
-- [x] **Restore Asset Meta Files**: Restored all deleted `.meta` files across models, textures, prefabs, and ScriptableObjects to preserve GUIDs.
-- [x] **Clean Git Index**: Unstaged accidental mass-staged file deletions (`git reset HEAD`).
-- [x] **Update `.gitignore`**:
-  - [x] Ignore AI agent directories (`.gemini/`, `.antigravity/`).
-  - [x] Ignore IDE user caches (`.vscode/`, `.idea/`, `*.DotSettings.user`, `*.user`).
-  - [x] Ignore Unity Editor local profiler settings (`ProjectSettings/ProjectAuditorSettings.asset`).
-  - [x] Ignore OS temporary junk (`Thumbs.db`, `desktop.ini`, `.DS_Store`).
-- [x] **Fix Assembly Definition References**:
-  - [x] Fixed `Neymanoff.HumanoidWardrobeardrobe` typo in `Neymanoffunity.HumanoidWardrobe.Tests.asmdef`.
-  - [x] Fixed invalid assembly names in `Neymanoffunity.HumanoidWardrobe.Editor.Tests.asmdef`.
-- [x] **Fix Editor Preview Double-Instantiation**:
-  - [x] Eliminated duplicate prefab leak in `WardrobeManagerEditor.PreviewLoadoutInEditor()`.
-  - [x] Added proper Unity Undo registration.
-- [x] **Initial Documentation Suite**:
-  - [x] Root repository `README.md` in English.
-  - [x] Package `README.md` and `CHANGELOG.md` in English.
-  - [x] Technical manual `Documentation/humanoid-wardrobe.md`.
+The foundational architectural pillars to establish before expanding features:
 
----
-
-## Phase 2: Core Improvements & Rig Robustness (🔄 In Progress)
-
-- [ ] **3D Test Assets Preparation**:
-  - [ ] Place complete binary FBX files and textures for Slavic Armor, Slavic Helmet, and Dummy into `Assets/3D_Models/`.
-  - [ ] Verify materials and textures connect automatically with restored GUIDs.
-- [ ] **`SkinnedMeshRemapper` Improvements**:
-  - [ ] Fix `rootBone` assignment: bind to target skeleton's `Hips` bone instead of character root GameObject.
-  - [ ] Implement Humanoid Avatar fallback bone matching (`Animator.GetBoneTransform`) when bone names differ between clothing and character rigs (e.g. Rigify vs Mixamo).
-  - [ ] Add option to copy or expand `localBounds` from character body mesh to prevent premature frustum culling.
-  - [ ] Add optional `updateWhenOffscreen` toggle for heavy animation setups.
-- [ ] **`HumanoidAttachmentPoint` Enhancements**:
-  - [ ] Add visual Gizmo in Scene view showing target bone socket, position offset, and forward orientation.
-  - [ ] Add interactive socket selection dropdown in the Inspector.
+- [ ] **1.1. Refactor Slot Model & Multi-Slot Occupancy**:
+  - [ ] Replace restrictive `ItemSlotRestriction` enum with declarative slot configuration on `WardrobeItemSO`:
+    - `List<EquipmentSlot> allowedSlots` (e.g., `[MainHand, OffHand]` or `[LeftRing, RightRing]`).
+    - `List<EquipmentSlot> additionalOccupiedSlots` (e.g., `[OffHand]` for 2H weapons).
+  - [ ] Introduce `EquippedItemInstance` internal record:
+    - Holds `WardrobeItemSO`, spawned `GameObject`, `PrimarySlot`, and `IReadOnlyList<EquipmentSlot> OccupiedSlots`.
+  - [ ] Multi-slot dictionary mapping:
+    - Point all occupied slots to the same `EquippedItemInstance` (e.g. `_slotToInstance[MainHand]` and `_slotToInstance[OffHand]`).
+  - [ ] Atomic multi-slot unequip:
+    - Calling `Unequip` on any occupied slot unlinks all associated slots and destroys the visual GameObject once.
+- [ ] **1.2. Stable `ItemId` Implementation**:
+  - [ ] Add `[SerializeField] private string itemId` to `WardrobeItemSO`.
+  - [ ] Ensure persistence and serialization rely strictly on `ItemId`, never asset filenames or `Resources.Load`.
+- [ ] **1.3. Explicit `EquipResult` & Richer Events**:
+  - [ ] Replace `GameObject` null-return with `EquipResult` struct:
+    - `EquipResultStatus`: `Success`, `InvalidSlot`, `SlotOccupied`, `MissingPrefab`, `MissingBone`, `IncompatibleRig`.
+  - [ ] Upgrade event signatures:
+    - `event Action<EquipmentSlot, WardrobeItemSO, GameObject> OnItemEquipped;`
+    - `event Action<EquipmentSlot, WardrobeItemSO> OnItemUnequipped;`
+    - `event Action<WardrobeLoadout> OnLoadoutChanged;`
+- [ ] **1.4. Extract Equipment Rule Resolver**:
+  - [ ] Separate slot conflict detection and validation logic from `WardrobeManager` into an isolated `EquipmentRuleResolver` domain helper.
 
 ---
 
-## Phase 3: Persistence, Serialization & Game API (⏳ Next)
+## Phase 2: Rig Robustness & Bone Remapping (⏳ Next)
 
-- [ ] **Serializable Loadout DTO**:
-  - [ ] Create `WardrobeLoadout` class and `EquippedItemEntry` struct.
-  - [ ] Implement `WardrobeManager.GetCurrentLoadout()`.
-  - [ ] Implement `WardrobeManager.ApplyLoadout(WardrobeLoadout loadout)`.
-  - [ ] Implement `ToJson()` and `FromJson()` methods for simple save game integration.
-- [ ] **Inventory Decoupling & Events**:
-  - [ ] Create `IWardrobeInventoryProvider` interface.
-  - [ ] Add rich C# events: `OnItemEquipped(slot, itemSO, instance)`, `OnItemUnequipped(slot, itemSO)`, `OnLoadoutChanged(loadout)`.
-  - [ ] Support query helpers: `bool IsSlotOccupied(EquipmentSlot slot)`.
-- [ ] **Dynamic Slot Extensibility**:
-  - [ ] Evaluate migration or extension for custom slots (e.g., Cloak, Belt, Mask, Quiver, Tail).
+- [ ] **2.1. `SkinnedMeshRemapper` Fixes**:
+  - [ ] Set `clothingRenderer.rootBone` to the skeleton's root bone (`Hips` / `spine`) instead of the character GameObject root.
+  - [ ] Add option to inherit or expand `localBounds` from the host character mesh to eliminate frustum culling flicker.
+  - [ ] Implement Humanoid Avatar fallback bone resolution (`Animator.GetBoneTransform`) for standard body joints when bone names differ.
+- [ ] **2.2. Twist & Helper Bone Handling**:
+  - [ ] Document rig matching requirements in code and warnings.
+  - [ ] Prepare architecture for bone alias mapping for non-standard DCC twist bones.
+- [ ] **2.3. Test Models Integration**:
+  - [ ] Verify imported binary FBX and texture assets against restored `.meta` GUIDs.
 
 ---
 
-## Phase 4: UPM Samples & Demo Decoupling (📋 Planned)
+## Phase 3: Loadout Persistence & DTO Serialization (📋 Planned)
 
-- [ ] **Separate Runtime Core from Demo UI**:
-  - [ ] Keep `Packages/com.neymanoff_unity.humanoid-wardrobe/Runtime/` strictly focused on core logic.
-  - [ ] Move demo UI scripts (`DemoInventoryUI`, `EquipmentSlotUI`, `WardrobeDemoAnimationController`) into a dedicated `Samples~/Demo/` folder according to Unity Package standards.
-- [ ] **Sample Import Configuration**:
-  - [ ] Update `package.json` to register the `Demo` sample with description and preview scene.
-  - [ ] Ensure package can be cleanly imported into an empty project without forcing sample UI assets into user folders.
-
----
-
-## Phase 5: Automated Testing & Verification (📋 Planned)
-
-- [ ] **EditMode Tests**:
-  - [ ] Test `WardrobeItemSO.CanFitInSlot()` logic across all restrictions (`OneHanded`, `TwoHanded`, `AnyRing`).
-  - [ ] Test `WardrobeLoadout` JSON serialization and deserialization roundtrip.
-  - [ ] Test slot conflict resolution (equipping 2H weapon clears off-hand).
-- [ ] **PlayMode Tests**:
-  - [ ] Test instantiation and parenting of `HumanoidAttachmentPoint` to valid humanoid bones.
-  - [ ] Test runtime bone remapping on mock humanoid rigs.
-  - [ ] Test `UnequipAll()` cleans up instances without leaving dangling objects.
+- [ ] **3.1. `WardrobeLoadout` Data Transfer Object**:
+  - [ ] Serializable `EquippedSlotEntry` struct (`slot`, `itemId`).
+  - [ ] `WardrobeLoadout.ToJson()` and `WardrobeLoadout.FromJson()`.
+- [ ] **3.2. Manager Integration**:
+  - [ ] `WardrobeManager.GetCurrentLoadout()`.
+  - [ ] `WardrobeManager.ApplyLoadout(WardrobeLoadout loadout, Func<string, WardrobeItemSO> resolver)`.
+  - [ ] Guarantee exactly one `OnLoadoutChanged` event per batch loadout application.
 
 ---
 
-## Phase 6: Asset Store Release Preparation (📋 Planned)
+## Phase 4: UPM Samples Separation (📋 Planned)
 
-- [ ] **Asset Store Guidelines Compliance**:
-  - [ ] Pass Unity Package Validation tests (no warnings, valid dependencies).
-  - [ ] Verify clean namespace conventions (`Neymanoff.HumanoidWardrobe`).
-  - [ ] Include standard `Third Party Notices.md` and `LICENSE` (MIT).
-- [ ] **Visuals & Presentation**:
-  - [ ] Create Asset Store cover banner (1920x1080) and icon (512x512).
-  - [ ] Record short GIF/video demonstrating hot-swapping clothing in Play Mode and Editor Preview.
-- [ ] **Documentation Polish**:
-  - [ ] Review all XML documentation comments across public APIs.
-  - [ ] Finalize quick-start guide in `Documentation/humanoid-wardrobe.md`.
+- [ ] **4.1. Decouple Demo UI from Core Package**:
+  - [ ] Move `Runtime/UI/` (`DemoInventoryUI`, `EquipmentSlotUI`, `WardrobeDemoAnimationController`) into `Samples~/Demo/`.
+  - [ ] Register sample in `package.json` with sample metadata and preview scene.
+  - [ ] Ensure core package compiles and operates cleanly without the demo UI assembly.
+
+---
+
+## Phase 5: Comprehensive Automated Test Suite (🔴 Critical)
+
+Both EditMode and PlayMode tests covering core stability and edge cases:
+
+- [ ] **Slot & Rule Tests**:
+  - [ ] Can equip into any allowed slot (e.g. one-handed weapon in either hand).
+  - [ ] Two-handed weapon occupies both `MainHand` and `OffHand`.
+  - [ ] Unequipping multi-slot item from secondary slot (e.g. `OffHand`) cleanly clears both slots and destroys visual instance once.
+  - [ ] Equip same item twice handling.
+  - [ ] Slot conflict resolution with existing equipped items.
+- [ ] **Serialization Tests**:
+  - [ ] `WardrobeLoadout` JSON serialization roundtrip fidelity.
+  - [ ] Rehydrating loadout with unknown `ItemId` gracefully reports failure.
+  - [ ] Duplicate `ItemId` detection and validation.
+- [ ] **Robustness & Edge Cases**:
+  - [ ] Missing bone in character skeleton returns `EquipResultStatus.MissingBone`.
+  - [ ] Invalid or null prefab returns `EquipResultStatus.MissingPrefab`.
+  - [ ] Incompatible rig detection.
+  - [ ] Rigs with differing bone naming conventions (Rigify vs Mixamo vs Synty).
+- [ ] **Event & Lifecycle Tests**:
+  - [ ] Event firing order verification (`OnItemUnequipped` -> `OnItemEquipped` -> `OnLoadoutChanged`).
+  - [ ] Exactly one `OnLoadoutChanged` fired per multi-slot transaction.
+  - [ ] Invalid `defaultLoadout` entries handled gracefully without exceptions.
+  - [ ] In-Editor Preview -> Clear Preview -> Assert zero leaked or dangling GameObjects.
+
+---
+
+## Phase 6: Advanced Features (📋 Planned)
+
+- [ ] **6.1. `WardrobeRigProfile`**:
+  - [ ] ScriptableObject defining per-rig socket offsets (Orc, Elf, Dwarf, Human), bone aliases, and custom bounds.
+- [ ] **6.2. Body Coverage & Mesh Clipping (`HideBodyParts`)**:
+  - [ ] Add flags to `WardrobeItemSO` (e.g. `HideTorso`, `HideArms`, `HideLegs`) to hide host body sub-meshes and eliminate armor poke-through.
+
+---
+
+## Phase 7: Asset Store Submission & Polish (📋 Planned)
+
+- [ ] Unity Package Validation tests (zero warnings, valid dependency manifests).
+- [ ] XML API documentation on all public methods and types.
+- [ ] Marketing assets: 1920x1080 banner, 512x512 icon, preview GIFs.

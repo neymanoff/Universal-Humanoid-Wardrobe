@@ -4,62 +4,53 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Active%20Development-orange.svg)](#)
 
-A modular, lightweight, and high-performance dynamic character customization and equipment wardrobe system for Unity characters rigged with the standard **Humanoid** avatar.
+A modular, lightweight character customization and equipment wardrobe system for Unity.
 
-Designed as an official **Unity Package** intended for free release on the **Unity Asset Store** and open-source portfolio presentation.
+Designed as an official **Unity Package** (UPM) for free distribution on the **Unity Asset Store** and open-source portfolio presentation.
 
 ---
 
 ## 📌 Key Capabilities
 
-* **Dual Equipping Modes**:
-  1. **Skinned Mesh Remapping**: For deformable clothing, armor, pants, and boots. Automatically binds clothing renderer bones to the target character skeleton at runtime to faithfully follow all character animations.
-  2. **Humanoid Bone Attachment**: For rigid items (weapons in hand, shields, helmets, rings, necklaces). Parents directly to standard `HumanBodyBones` with customizable local transform offsets and automatic mirroring for off-hand / left-side slots.
-* **Game & Inventory Decoupled**: Operates independently of any specific inventory model, weight system, or stat calculation framework.
-* **Slot Restriction Rules**: Built-in support for Two-Handed weapons (automatically unequipping off-hand items), One-Handed versatility, and ring swaps.
-* **In-Editor Previewing**: Inspect default character loadouts in the Scene View without entering Play Mode.
-* **Turnkey Paper-Doll Demo**: Includes an interactive demo UI featuring paper-doll equipment slots, inventory grid, character turntable rotation, and fitting pose controls.
+* **Dual Equipping Paradigms**:
+  1. **Rigid Socket Attachment**: Weapons, shields, helmets, jewelry, and props parent directly to standard `HumanBodyBones` sockets with customizable local transform offsets and auto-mirroring for left-side / off-hand slots. Highly universal across all standard Humanoid avatars.
+  2. **Skinned Mesh Remapping**: Wearable clothing and armor meshes dynamically remap their bone bindings to match the host character's active skeleton at runtime without duplicating bone hierarchies.
+* **Gameplay-Agnostic & Decoupled**: The wardrobe core does not know about combat, player stats, inventory databases, or economy. It manages equipment visualization, socket transforms, and bone bindings.
+* **Multi-Slot Occupancy & Conflict Resolution**: Support for items occupying multiple slots (e.g. Two-Handed greatswords occupying both `MainHand` and `OffHand` simultaneously with atomic unequip).
+* **Deterministic Event Model & Status Results**: Explicit `EquipResult` return codes and typed events (`OnItemEquipped`, `OnItemUnequipped`, `OnLoadoutChanged`) for frictionless integration with any external game system.
+* **In-Editor Previewing**: Inspect and author character loadouts directly in the Scene View without entering Play Mode.
+* **Turnkey Paper-Doll Demo**: Includes an optional demonstration UI featuring equipment slots, inventory selection grid, turntable character rotation, and fitting pose toggles.
 
 ---
 
-## 📂 Project & Package Structure
+## ⚠️ Compatibility Contract
+
+To avoid unrealistic assumptions, the package defines clear compatibility boundaries:
+
+* **Rigid Items (Weapons, Props, Jewelry)**: **Universal**. Any character with a valid Unity `Humanoid` Avatar can equip rigid items via `HumanBodyBones`.
+* **Skinned Items (Clothing, Armor, Robes)**: **Rig-Dependent**. While Humanoid retargets animations cleanly, skinned meshes require matching bind poses, rest poses, body proportions, and compatible bone hierarchies (including twist and helper bones).
+
+---
+
+## 📂 Package Structure
 
 * `Packages/com.neymanoff_unity.humanoid-wardrobe/` — The Core UPM package:
   * `Runtime/` — Core wardrobe scripts (`WardrobeManager`, `SkinnedMeshRemapper`, `HumanoidAttachmentPoint`, `WardrobeItemSO`).
-  * `Runtime/UI/` — Demo inventory UI and paper-doll slot components.
-  * `Editor/` — Custom Unity Editor inspectors and preview utilities.
-  * `Documentation/` — Package manual and reference docs.
-  * `Tests/` — EditMode and PlayMode test suites.
-* `Assets/` — Development test environment:
-  * `3D_Models/` — Test models (Humanoid Dummy, Slavic helmet, chest armor, shields, weapons).
-  * `ScriptableObjects/` — Equippable wardrobe item database assets.
-  * `Scenes/WardrobeDemoScene.unity` — Interactive demonstration scene.
+  * `Runtime/UI/` — Demo UI components (scheduled for extraction into `Samples~/Demo`).
+  * `Editor/` — Custom Unity Editor inspectors and preview tooling.
+  * `Documentation/` — Technical package reference manual.
+  * `Tests/` — EditMode and PlayMode automated test suites.
+* `Assets/` — Project sandbox and test environment.
 
 ---
 
-## 📚 Documentation Index
+## 📚 Documentation
 
-For in-depth guides and technical specifications, explore the project documentation:
-
-* 📐 **[Architecture Specification](docs/ARCHITECTURE.md)**: Full system architecture, UML Class diagrams, sequence diagrams (Mermaid), persistence models, and decoupling patterns.
-* 🛠️ **[Integration & User Guide](docs/INTEGRATION_GUIDE.md)**: Step-by-step developer tutorial covering character setup, item creation, inventory integration, and save/load state.
-* 📋 **[Roadmap & Task Tracker](docs/TODO.md)**: Comprehensive tracking of completed fixes, active tasks, and milestones toward Asset Store publication.
-* 📖 **[Package Technical Manual](Packages/com.neymanoff_unity.humanoid-wardrobe/Documentation/humanoid-wardrobe.md)**: UPM package reference manual.
-
----
-
-## 🛠️ Git LFS & Asset Recovery Notes
-
-If 3D models or textures appear missing after cloning from GitHub:
-
-1. **Root Cause**: `.fbx`, `.png`, and `.ttf` files are tracked via **Git LFS**. If binary objects were not uploaded to GitHub LFS storage (404 error during clone), Git places 130-byte text pointer files on disk.
-2. **Restoring Meta Files**:
-   All `.meta` files have been restored to preserve model GUIDs and humanoid avatar mappings:
-   ```bash
-   git checkout -- "*.meta"
-   ```
-3. **Placing Binary Assets**:
-   Copy your original FBX and PNG files into the respective `Assets/3D_Models/...` directories. Unity will instantly re-bind all materials, prefabs, and scene instances without broken references.
+* 📐 **[Architecture Specification](docs/ARCHITECTURE.md)**: System design, UML class diagrams, sequence diagrams (Mermaid), multi-slot mapping, and persistence models.
+* 🛠️ **[Integration & User Guide](docs/INTEGRATION_GUIDE.md)**: Step-by-step developer tutorial covering character setup, item authoring, and game system integration.
+* 📋 **[Roadmap & Task Tracker](docs/TODO.md)**: Comprehensive tracking of completed features and active milestones.
+* 🔧 **[Internal Development & Git Guide](docs/DEVELOPMENT.md)**: Git LFS recovery procedures and contributor workflow.
+* 📖 **[Package Manual](Packages/com.neymanoff_unity.humanoid-wardrobe/Documentation/humanoid-wardrobe.md)**: In-package reference manual.
 
 ---
 
@@ -70,8 +61,8 @@ If 3D models or textures appear missing after cloning from GitHub:
 3. Press **Play**:
    * Click items in the bottom inventory grid to equip them.
    * Click occupied equipment slots on the paper-doll UI to unequip.
-   * Click and drag the left mouse button across the character to rotate preview (Turntable).
-   * Use **Play Fitting Pose (T-Pose)** and **Play Idle** to evaluate mesh deformation across static and animated states.
+   * Drag the left mouse button across the character to rotate preview (Turntable).
+   * Use **Play Fitting Pose (T-Pose)** and **Play Idle** to evaluate mesh deformation in static and animated states.
 
 ---
 
