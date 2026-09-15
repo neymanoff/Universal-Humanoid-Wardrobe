@@ -61,6 +61,7 @@ To combine strategic cloud insights with high-throughput, private local executio
 ### 4.3. 3-Tier Defense-in-Depth Against Obsolete APIs
 To ensure no deprecated or legacy code ever enters the repository, the project enforces a three-tier defense system:
 1. **Tier 1 (Model Level - Modelfile System Constraints)**: Both `unity-coder:30b` and `unity-thinker:32b` have hardcoded system prohibitions against legacy APIs (`FindObjectOfType`, `UnityEngine.UI.Text`, `WWW`, `RandomRange`).
+Strictly prohibit legacy UnityEngine.Input.* in favor of Unity 6 Input System Package (UnityEngine.InputSystem / EnhancedTouch)
 2. **Tier 2 (Context Level - Knowledge Base & Standards)**: The `docs/UNITY6_STANDARDS.md` architectural specification provides unambiguous rules for replacements, zero-allocation conventions, and bone remapping protocols.
 3. **Tier 3 (Compiler Level - MSBuild Fatal Errors)**: The root `Directory.Build.props` configures `<WarningsAsErrors>CS0618</WarningsAsErrors>`. Any deprecated API call instantly causes compilation failure with compiler-generated remediation hints.
 

@@ -8,6 +8,13 @@
 	"dependencies": {
 		"com.unity.test-framework": "1.6.0"
 	},
+	"samples": [
+		{
+			"displayName": "Demo",
+			"description": "Interactive showcase demo featuring paper-doll equipment UI, modular armor swapping, twist bone remapping, and loadout serialization.",
+			"path": "Samples~/Demo"
+		}
+	],
 	"author": {
 		"name": "Oleg Neyman",
 		"url": "http://www.example.com",

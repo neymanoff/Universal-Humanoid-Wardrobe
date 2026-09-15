@@ -15,8 +15,8 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 2** | Loadout Persistence & DTO Serialization | 🟡 High | ✅ Completed |
 | **Phase 3** | Rig Robustness & Helper/Twist Bone Remapping | 🟡 High | ✅ Completed |
 | **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | ✅ Completed |
-| **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | 🔄 Next |
-| **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | 📋 Planned |
+| **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | ✅ Completed |
+| **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | 🔄 Next |
 | **Phase 7** | Asset Store Submission & Showcase Demo Scene | 🔵 Release | 📋 Planned |
 
 ---
@@ -108,16 +108,18 @@ The foundational architectural pillars established to guarantee game-agnostic be
 
 ---
 
-## Phase 5: UPM Samples Separation (🔄 Next)
+## Phase 5: UPM Samples Separation (✅ Completed)
 
-- [ ] **5.1. Decouple Demo UI from Core Package**:
-  - [ ] Move `Packages/.../Runtime/UI/` (`DemoInventoryUI`, `EquipmentSlotUI`, `WardrobeDemoAnimationController`) into `Samples~/Demo/`.
-  - [ ] Register sample in `package.json` with sample metadata and preview scene.
-  - [ ] Ensure core package compiles with zero dependencies on the demo UI.
+- [x] **5.1. Decouple Demo UI from Core Package**:
+  - [x] Moved `Packages/.../Runtime/UI/` (`DemoInventoryUI`, `EquipmentSlotUI`, `WardrobeDemoAnimationController`, `CharacterRotator`) into `Samples~/Demo/Scripts/`.
+  - [x] Created `Neymanoff.HumanoidWardrobe.Demo.asmdef` for isolated demo compilation with TextMeshPro and InputSystem bindings.
+  - [x] Maintained local testbed copy under `Assets/Scripts/Demo/` with preserved GUIDs so `WardrobeDemoScene.unity` retains 100% component integrity.
+  - [x] Registered official `samples` definition in `package.json` with metadata manifest `.sample.json`.
+  - [x] Verified core runtime assembly compiles with zero UI dependencies, 0 warnings, and 0 errors.
 
 ---
 
-## Phase 6: Comprehensive Automated NUnit Test Suite (🔴 Critical)
+## Phase 6: Comprehensive Automated NUnit Test Suite (🔄 Next)
 
 EditMode and PlayMode unit tests covering:
 - [ ] **Rule & Slot Tests**:
