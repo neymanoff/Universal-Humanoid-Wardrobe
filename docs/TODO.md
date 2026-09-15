@@ -13,8 +13,8 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 0** | AI Agent Infrastructure & 3-Tier Anti-Obsolete Defense | 🔴 Critical | ✅ Completed |
 | **Phase 1** | Immediate Core Architecture Refactoring | 🔴 Critical | ✅ Completed |
 | **Phase 2** | Loadout Persistence & DTO Serialization | 🟡 High | ✅ Completed |
-| **Phase 3** | Rig Robustness & Helper/Twist Bone Remapping | 🟡 High | 🔄 Next |
-| **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | 📋 Planned |
+| **Phase 3** | Rig Robustness & Helper/Twist Bone Remapping | 🟡 High | ✅ Completed |
+| **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | 🔄 Next |
 | **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | 📋 Planned |
 | **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | 📋 Planned |
 | **Phase 7** | Asset Store Submission & Showcase Demo Scene | 🔵 Release | 📋 Planned |
@@ -78,19 +78,21 @@ The foundational architectural pillars established to guarantee game-agnostic be
 
 ---
 
-## Phase 3: Rig Robustness & Helper/Twist Bone Remapping (🔄 Next)
+## Phase 3: Rig Robustness & Helper/Twist Bone Remapping (✅ Completed)
 
 - [x] **3.1. `rootBone` Anchoring**:
   - [x] Set `clothingRenderer.rootBone` to skeleton's `Hips` bone (`HumanBodyBones.Hips`) instead of GameObject root.
-- [ ] **3.2. Twist & Helper Bone Safe Fallbacks**:
-  - [ ] If apparel mesh references bones not present in base character skeleton (e.g. `Arm_Twist_01`), implement parent-bone fallback binding to prevent vertex tearing.
-  - [ ] Log informative warning when non-standard helper bones are re-routed.
-- [ ] **3.3. Bounding Box & Frustum Culling**:
-  - [ ] Inherit or expand `localBounds` from base character mesh to eliminate camera frustum culling flicker.
+- [x] **3.2. Twist & Helper Bone Safe Fallbacks**:
+  - [x] Hierarchical ancestor fallback walking up parent transform chain when bones are missing from target skeleton.
+  - [x] Normalized bone name resolution stripping standard DCC prefixes (`mixamorig:`, `DEF-`, `Bip01_`, `Bone_`).
+  - [x] Structured diagnostic warnings logged when bones are safely re-routed.
+  - [x] Complete elimination of missing/destroyed bone references in `clothingRenderer.bones`.
+- [x] **3.3. Bounding Box & Frustum Culling**:
+  - [x] Inherit and expand `localBounds` from base character mesh to eliminate camera frustum culling flicker.
 
 ---
 
-## Phase 4: Mesh Clipping & Body Part Masking (📋 Planned)
+## Phase 4: Mesh Clipping & Body Part Masking (🔄 Next)
 
 - [ ] **4.1. Body Mask Flags on `WardrobeItemSO`**:
   - [ ] Add `[System.Flags] public enum BodyPartMask { None, Head, Torso, Arms, Hands, Legs, Feet }`.

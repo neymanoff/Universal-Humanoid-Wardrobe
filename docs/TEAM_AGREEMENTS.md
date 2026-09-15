@@ -34,9 +34,11 @@ This document defines the universal interaction protocol, operational boundaries
 
 ## 3. Git & File Safety Rules
 
+* **Manual Developer Commits**: The agent must **NEVER** execute `git commit` commands. The human developer reviews all changed files, inspections, and diffs manually via GitHub Desktop before pushing. Upon completing work, the agent must provide only the proposed Git commit `Summary` and `Description` in English.
 * **Staging Hygiene**: Avoid blind bulk staging (`git add -A` or `git commit -a`) when binary 3D assets or textures are in flux.
 * **Git LFS Awareness**: Large binaries (`*.fbx`, `*.png`, `*.ttf`) are managed via Git LFS. Never delete or commit deletions of binary assets unless explicitly intended.
 * **Meta File Protection**: Unity `.meta` files preserve GUIDs and asset references. Never delete orphaned `.meta` files without verifying whether the corresponding source asset exists.
+
 
 ---
 

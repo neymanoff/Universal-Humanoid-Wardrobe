@@ -36,5 +36,7 @@ The host machine runs a local Ollama daemon (`http://127.0.0.1:11434`) connected
 ---
 
 ## 4. Git & Asset Safety
+* **Manual Developer Commits**: The agent must NEVER execute `git commit`. The developer reviews all diffs and commits manually via GitHub Desktop. Upon completing work, the agent provides only the suggested commit `Summary` and `Description` in English.
 * **Git LFS**: Never stage or commit deletions of binary 3D assets (`*.fbx`, `*.png`, `*.mat`) without explicit developer approval.
 * **Unity Meta Files**: Every asset must have a valid `.meta` file. Never delete `.meta` files without verifying source existence.
+
