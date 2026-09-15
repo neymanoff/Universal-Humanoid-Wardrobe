@@ -14,8 +14,8 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 1** | Immediate Core Architecture Refactoring | 🔴 Critical | ✅ Completed |
 | **Phase 2** | Loadout Persistence & DTO Serialization | 🟡 High | ✅ Completed |
 | **Phase 3** | Rig Robustness & Helper/Twist Bone Remapping | 🟡 High | ✅ Completed |
-| **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | 🔄 Next |
-| **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | 📋 Planned |
+| **Phase 4** | Mesh Clipping & Body Part Masking | 🟡 High | ✅ Completed |
+| **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | 🔄 Next |
 | **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | 📋 Planned |
 | **Phase 7** | Asset Store Submission & Showcase Demo Scene | 🔵 Release | 📋 Planned |
 
@@ -92,17 +92,23 @@ The foundational architectural pillars established to guarantee game-agnostic be
 
 ---
 
-## Phase 4: Mesh Clipping & Body Part Masking (🔄 Next)
+## Phase 4: Mesh Clipping & Body Part Masking (✅ Completed)
 
-- [ ] **4.1. Body Mask Flags on `WardrobeItemSO`**:
-  - [ ] Add `[System.Flags] public enum BodyPartMask { None, Head, Torso, Arms, Hands, Legs, Feet }`.
-  - [ ] Allow items (e.g. plate cuirass, closed boots) to declare which body regions they conceal.
-- [ ] **4.2. Target Character Body Mesh Hiding**:
-  - [ ] Support modular character setups: deactivate sub-meshes or set blendshapes to shrink occluded geometry, completely eliminating poke-through clipping.
+- [x] **4.1. Granular `BodyPartMask` Enum**:
+  - [x] Created `[System.Flags] public enum BodyPartMask` with granular zones: `Head`, `UpperTorso`, `LowerTorso`, `UpperArms`, `LowerArms`, `Hands`, `UpperLegs`, `LowerLegs`, `Feet`.
+- [x] **4.2. `WardrobeItemSO` Anti-Clipping Metadata**:
+  - [x] Added `hiddenBodyParts` to declare occluded anatomical regions.
+  - [x] Added `shrinkBlendShapes` to declare target morph shape keys to deflate.
+- [x] **4.3. `WardrobeManager` Body Hiding & Morph Runtime**:
+  - [x] Added `ModularBodyPart` struct binding body mask flags to sub-mesh renderers.
+  - [x] Added `modularBodyParts` and `morphTargets` serializable lists on `WardrobeManager`.
+  - [x] Implemented `UpdateBodyMasksAndBlendshapes()` called automatically on equip, unequip, and loadout restore.
+- [x] **4.4. 3D Artist Blender Workflow Guide**:
+  - [x] Authored [docs/BLENDER_CHARACTER_SETUP.md](BLENDER_CHARACTER_SETUP.md) detailing both modular sub-mesh splitting and shrink shape key authoring in Blender 4.x.
 
 ---
 
-## Phase 5: UPM Samples Separation (📋 Planned)
+## Phase 5: UPM Samples Separation (🔄 Next)
 
 - [ ] **5.1. Decouple Demo UI from Core Package**:
   - [ ] Move `Packages/.../Runtime/UI/` (`DemoInventoryUI`, `EquipmentSlotUI`, `WardrobeDemoAnimationController`) into `Samples~/Demo/`.

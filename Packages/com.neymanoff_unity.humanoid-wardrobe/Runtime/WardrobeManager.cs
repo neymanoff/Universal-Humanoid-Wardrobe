@@ -39,9 +39,26 @@ namespace Neymanoff.HumanoidWardrobe
             public GameObject prefab;
         }
 
+        [System.Serializable]
+        public struct ModularBodyPart
+        {
+            [Tooltip("Anatomical body region represented by this sub-mesh renderer.")]
+            public BodyPartMask part;
+
+            [Tooltip("The Renderer (SkinnedMeshRenderer or MeshRenderer) that will be enabled/disabled.")]
+            public Renderer renderer;
+        }
+
         [Header("Default Loadout")]
         [Tooltip("Items equipped automatically when the game starts.")]
         public List<DefaultEquipment> defaultLoadout = new();
+
+        [Header("Body Masking & Anti-Clipping")]
+        [Tooltip("Optional modular sub-meshes of the base character body that will be automatically hidden when covered by apparel.")]
+        [SerializeField] private List<ModularBodyPart> modularBodyParts = new();
+
+        [Tooltip("Optional SkinnedMeshRenderers on the base character containing shrink/morph blendshapes (e.g. Shrink_Chest, Shrink_Torso).")]
+        [SerializeField] private List<SkinnedMeshRenderer> morphTargets = new();
 
         private Animator _animator;
         private readonly Dictionary<EquipmentSlot, EquippedItemInstance> _slotToInstance = new();
@@ -78,6 +95,8 @@ namespace Neymanoff.HumanoidWardrobe
                     EquipPrefab(item.slot, item.prefab);
                 }
             }
+
+            UpdateBodyMasksAndBlendshapes();
         }
 
         /// <summary>
@@ -119,6 +138,8 @@ namespace Neymanoff.HumanoidWardrobe
                 _slotToInstance[occupiedSlots[i]] = itemInstance;
             }
             _equippedInstances.Add(itemInstance);
+
+            UpdateBodyMasksAndBlendshapes();
 
             // Fire events
             OnItemEquipped?.Invoke(requestedSlot, itemSO, spawnedInstance);
@@ -243,6 +264,7 @@ namespace Neymanoff.HumanoidWardrobe
 
             if (!suppressLoadoutEvent)
             {
+                UpdateBodyMasksAndBlendshapes();
                 OnLoadoutChanged?.Invoke(GetCurrentLoadout());
             }
 
@@ -259,6 +281,8 @@ namespace Neymanoff.HumanoidWardrobe
             {
                 UnequipInternal(instances[i].PrimarySlot, suppressLoadoutEvent: true);
             }
+
+            UpdateBodyMasksAndBlendshapes();
             OnLoadoutChanged?.Invoke(GetCurrentLoadout());
         }
 
@@ -354,6 +378,74 @@ namespace Neymanoff.HumanoidWardrobe
                 EquipmentSlot.RightRing => HumanBodyBones.RightRingProximal,
                 _ => HumanBodyBones.Hips
             };
+        }
+
+        public IReadOnlyList<ModularBodyPart> ModularBodyParts => modularBodyParts;
+        public IReadOnlyList<SkinnedMeshRenderer> MorphTargets => morphTargets;
+
+        /// <summary>
+        /// Re-evaluates all currently equipped items and updates modular body part visibility
+        /// and character shrink blendshapes to eliminate mesh clipping.
+        /// </summary>
+        public void UpdateBodyMasksAndBlendshapes()
+        {
+            // 1. Aggregate active masks and active blendshape names across all equipped items
+            BodyPartMask combinedHiddenMask = BodyPartMask.None;
+            HashSet<string> activeShrinkShapes = null;
+
+            for (int i = 0; i < _equippedInstances.Count; i++)
+            {
+                WardrobeItemSO itemSO = _equippedInstances[i].ItemData;
+                if (itemSO == null) continue;
+
+                combinedHiddenMask |= itemSO.HiddenBodyParts;
+
+                if (itemSO.ShrinkBlendShapes != null && itemSO.ShrinkBlendShapes.Count > 0)
+                {
+                    activeShrinkShapes ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    for (int s = 0; s < itemSO.ShrinkBlendShapes.Count; s++)
+                    {
+                        string shapeName = itemSO.ShrinkBlendShapes[s];
+                        if (!string.IsNullOrEmpty(shapeName))
+                        {
+                            activeShrinkShapes.Add(shapeName);
+                        }
+                    }
+                }
+            }
+
+            // 2. Toggle modular body parts visibility
+            for (int i = 0; i < modularBodyParts.Count; i++)
+            {
+                ModularBodyPart bodyPart = modularBodyParts[i];
+                if (bodyPart.renderer == null) continue;
+
+                bool shouldHide = (combinedHiddenMask & bodyPart.part) != 0;
+                bodyPart.renderer.enabled = !shouldHide;
+            }
+
+            // 3. Update shrink blendshapes on configured morph target renderers
+            for (int i = 0; i < morphTargets.Count; i++)
+            {
+                SkinnedMeshRenderer morphTarget = morphTargets[i];
+                if (morphTarget == null || morphTarget.sharedMesh == null) continue;
+
+                Mesh mesh = morphTarget.sharedMesh;
+                int blendShapeCount = mesh.blendShapeCount;
+
+                for (int b = 0; b < blendShapeCount; b++)
+                {
+                    string shapeName = mesh.GetBlendShapeName(b);
+                    if (activeShrinkShapes != null && activeShrinkShapes.Contains(shapeName))
+                    {
+                        morphTarget.SetBlendShapeWeight(b, 100f);
+                    }
+                    else if (shapeName.StartsWith("Shrink_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        morphTarget.SetBlendShapeWeight(b, 0f);
+                    }
+                }
+            }
         }
     }
 }

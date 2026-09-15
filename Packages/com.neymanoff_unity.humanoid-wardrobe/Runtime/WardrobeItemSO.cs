@@ -48,6 +48,13 @@ namespace Neymanoff.HumanoidWardrobe
         [Tooltip("3D prefab to spawn. Must contain SkinnedMeshRemapper or HumanoidAttachmentPoint.")]
         [SerializeField] private GameObject itemPrefab;
 
+        [Header("Body Clipping Prevention")]
+        [Tooltip("Anatomical regions of the base character body concealed by this item. Concealed modular sub-meshes will be deactivated.")]
+        [SerializeField] private BodyPartMask hiddenBodyParts = BodyPartMask.None;
+
+        [Tooltip("Blendshape names on the base character body to set to 100% weight to tuck/shrink skin under this clothing item.")]
+        [SerializeField] private List<string> shrinkBlendShapes = new();
+
         public string ItemId
         {
             get
@@ -79,6 +86,8 @@ namespace Neymanoff.HumanoidWardrobe
         }
 
         public IReadOnlyList<EquipmentSlot> AdditionalOccupiedSlots => additionalOccupiedSlots;
+        public BodyPartMask HiddenBodyParts => hiddenBodyParts;
+        public IReadOnlyList<string> ShrinkBlendShapes => shrinkBlendShapes;
 
         private void OnValidate()
         {
