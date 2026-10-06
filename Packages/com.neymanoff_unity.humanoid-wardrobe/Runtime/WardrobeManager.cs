@@ -129,6 +129,31 @@ namespace Neymanoff.HumanoidWardrobe
         {
             _bodyScale = bodyScale;
             UpdateBodyMasksAndBlendshapes();
+            RefreshAttachmentOffsets();
+        }
+
+        /// <summary>
+        /// Re-evaluates local offsets and scale across all active socket attachment points.
+        /// Useful when swapping body scale profiles or dynamic scaling in real time.
+        /// </summary>
+        public void RefreshAttachmentOffsets()
+        {
+            for (int i = 0; i < _equippedInstances.Count; i++)
+            {
+                var inst = _equippedInstances[i];
+                if (inst?.InstanceObject != null && inst.InstanceObject.TryGetComponent<HumanoidAttachmentPoint>(out var attachment))
+                {
+                    bool isLeftSlot = (inst.PrimarySlot == EquipmentSlot.OffHand || inst.PrimarySlot == EquipmentSlot.LeftRing);
+                    if (attachment.CurrentSocketState == SocketAttachmentState.Holstered)
+                    {
+                        attachment.SetSocketState(SocketAttachmentState.Holstered, _animator, _bodyScale, inst.PrimarySlot, isLeftSlot);
+                    }
+                    else
+                    {
+                        attachment.ApplyOffsets(isLeftSlot, _bodyScale, inst.PrimarySlot);
+                    }
+                }
+            }
         }
 
         private void Awake()

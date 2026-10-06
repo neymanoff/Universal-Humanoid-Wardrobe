@@ -21,6 +21,7 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 8** | Interactive In-Editor Acceptance Testing & Feedback | 🔴 Critical | 🔄 In Review |
 | **Phase 9** | Character Scaling, Body Profiles & Adaptive Fitting | 🟡 High | 🛠️ Implemented |
 | **Phase 10** | Tactical/Survival Slots & Dual Socket States (Drawn/Holstered) | 🟡 High | 🛠️ Implemented |
+| **Phase 11** | Mobile Touch UI, Drag-and-Drop & Dual-Wielding Showcase | 🟡 High | 🛠️ Implemented |
 
 ---
 
@@ -218,4 +219,28 @@ Generalization of wardrobe slots and weapon states to support tactical shooters 
   - [x] Verify slot resolution for all tactical and survival categories (`TacticalAndSocketStateTests.cs`).
   - [x] Verify roundtrip JSON serialization of tactical loadouts.
   - [x] Verify transition between Drawn and Holstered states, re-parenting, profile overrides, and event emission.
+
+---
+
+## Phase 11: Mobile Touch UI, Drag-and-Drop & Dual-Wielding Showcase (🛠️ [IMPLEMENTED])
+
+Mobile/touch-first UI and interaction polish for demo and presentation layers:
+- [x] **11.1. Touch & Pointer Drag-and-Drop System (`DraggableItemUI`)**:
+  - [x] Implement `DraggableItemUI` with `IBeginDragHandler`, `IDragHandler`, `IEndDragHandler`, `IPointerClickHandler`.
+  - [x] Support floating drag proxy thumbnail following finger/cursor on top Canvas overlay.
+  - [x] Make `EquipmentSlotUI` implement `IDropHandler` and `IBeginDragHandler` for dropping items onto specific slots and dragging between slots.
+- [x] **11.2. Dual-Wielding Slot Assignment & Hand Swapping**:
+  - [x] Allow dragging 1H weapons directly onto `MainHand` or `OffHand` slots.
+  - [x] Allow dragging an equipped weapon from `MainHand` to `OffHand` (and vice versa) to swap hands.
+  - [x] Support dragging an item out of a slot to unequip.
+  - [x] Smart slot resolution in `DemoInventoryUI.EquipItem` prioritizing open allowed slots for fast tap dual-wielding.
+- [x] **11.3. On-Screen Mobile Touch Action Bar**:
+  - [x] Add touch button for `Clear / Unequip All`.
+  - [x] Add touch buttons for `Save Loadout` and `Load Loadout`.
+  - [x] Add touch button for `Toggle Holstered / Drawn` state (`ToggleHolsterState`).
+  - [x] Add on-screen character body profile buttons/dropdown (`Standard`, `Dwarf`, `Giant`) with runtime scale fallback.
+- [x] **11.4. Synchronization & Verification**:
+  - [x] Synchronize scripts across `Assets/Scripts/Demo/` and `Samples~/Demo/Scripts/`.
+  - [x] Verify clean compilation and 0 warnings (100% NUnit tests pass: 45/45).
+
 
