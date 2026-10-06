@@ -65,6 +65,25 @@ namespace Neymanoff.HumanoidWardrobe
         [Tooltip("Optional transform overrides tuned specifically for different body profiles (e.g. Dwarf, Orc).")]
         [SerializeField] private List<ProfileTransformOverride> profileOverrides = new();
 
+        [Header("Holstered State Options")]
+        [Tooltip("If enabled, allows this item to transition between in-hand (Drawn) and stowed (Holstered) states.")]
+        [SerializeField] private bool supportsHolsteredState = false;
+
+        [Tooltip("Target humanoid bone when holstered (e.g. Hips for a sidearm/sword, Chest for a back rifle/shield).")]
+        [SerializeField] private HumanBodyBones holsteredBone = HumanBodyBones.Hips;
+
+        [Tooltip("Local position offset relative to the holstered bone.")]
+        [SerializeField] private Vector3 holsteredLocalPosition = Vector3.zero;
+
+        [Tooltip("Local rotation offset relative to the holstered bone (Euler angles).")]
+        [SerializeField] private Vector3 holsteredLocalRotation = Vector3.zero;
+
+        [Tooltip("Local scale override when holstered (usually 1, 1, 1).")]
+        [SerializeField] private Vector3 holsteredLocalScale = Vector3.one;
+
+        [Tooltip("Optional transform overrides tuned specifically for holstered state across different body profiles.")]
+        [SerializeField] private List<ProfileTransformOverride> holsteredProfileOverrides = new();
+
         public bool UseCustomBone => useCustomBone;
         public HumanBodyBones TargetBone => targetBone;
         public Vector3 LocalPosition => localPosition;
@@ -72,6 +91,14 @@ namespace Neymanoff.HumanoidWardrobe
         public Vector3 LocalScale => localScale;
         public bool AutoMirrorForLeftSlot => autoMirrorForLeftSlot;
         public IReadOnlyList<ProfileTransformOverride> ProfileOverrides => profileOverrides;
+
+        public SocketAttachmentState CurrentSocketState { get; private set; } = SocketAttachmentState.Drawn;
+        public bool SupportsHolsteredState => supportsHolsteredState;
+        public HumanBodyBones HolsteredBone => holsteredBone;
+        public Vector3 HolsteredLocalPosition => holsteredLocalPosition;
+        public Vector3 HolsteredLocalRotation => holsteredLocalRotation;
+        public Vector3 HolsteredLocalScale => holsteredLocalScale;
+        public IReadOnlyList<ProfileTransformOverride> HolsteredProfileOverrides => holsteredProfileOverrides;
 
         /// <summary>
         /// Applies local offsets, optionally factoring in character body scale profile and left-side mirroring.
@@ -128,6 +155,147 @@ namespace Neymanoff.HumanoidWardrobe
             transform.localScale = scale;
         }
 
+        /// <summary>
+        /// Transitions the item between Drawn (in-hand active) and Holstered (stowed) states,
+        /// re-parenting to the target bone and applying the appropriate local offsets.
+        /// </summary>
+        public bool SetSocketState(
+            SocketAttachmentState state,
+            Animator animator,
+            CharacterBodyScale bodyScale = null,
+            EquipmentSlot slot = EquipmentSlot.MainHand,
+            bool isLeftSlot = false)
+        {
+            if (state == SocketAttachmentState.Holstered && !supportsHolsteredState)
+            {
+                return false;
+            }
+
+            if (animator == null)
+            {
+                return false;
+            }
+
+            if (state == SocketAttachmentState.Holstered)
+            {
+                Transform targetBoneTransform = null;
+                if (animator.isHuman && animator.avatar != null)
+                {
+                    targetBoneTransform = animator.GetBoneTransform(holsteredBone);
+                }
+
+                if (targetBoneTransform == null)
+                {
+                    targetBoneTransform = ResolveBoneFallback(animator.transform, holsteredBone);
+                }
+
+                if (targetBoneTransform == null)
+                {
+                    Debug.LogWarning($"[HumanoidAttachmentPoint] Holstered bone {holsteredBone} not found on {animator.gameObject.name}!");
+                    return false;
+                }
+
+                transform.SetParent(targetBoneTransform, false);
+                ApplyHolsteredOffsets(bodyScale);
+                CurrentSocketState = SocketAttachmentState.Holstered;
+                return true;
+            }
+            else
+            {
+                HumanBodyBones activeBone = useCustomBone ? targetBone : WardrobeManager.GetDefaultBoneForSlot(slot);
+                Transform targetBoneTransform = null;
+                if (animator.isHuman && animator.avatar != null)
+                {
+                    targetBoneTransform = animator.GetBoneTransform(activeBone);
+                }
+
+                if (targetBoneTransform == null)
+                {
+                    targetBoneTransform = ResolveBoneFallback(animator.transform, activeBone);
+                }
+
+                if (targetBoneTransform == null)
+                {
+                    Debug.LogWarning($"[HumanoidAttachmentPoint] Active bone {activeBone} not found on {animator.gameObject.name}!");
+                    return false;
+                }
+
+                transform.SetParent(targetBoneTransform, false);
+                ApplyOffsets(isLeftSlot, bodyScale, slot);
+                CurrentSocketState = SocketAttachmentState.Drawn;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Attempts to find a matching bone transform in the character hierarchy when Animator.GetBoneTransform is null.
+        /// Useful for greybox prototyping rigs and testing environments without a full Mecanim Humanoid Avatar.
+        /// </summary>
+        public static Transform ResolveBoneFallback(Transform root, HumanBodyBones bone)
+        {
+            if (root == null) return null;
+            string targetName = bone.ToString();
+            return FindBoneRecursive(root, targetName);
+        }
+
+        private static Transform FindBoneRecursive(Transform current, string targetName)
+        {
+            if (string.Equals(current.name, targetName, StringComparison.OrdinalIgnoreCase))
+            {
+                return current;
+            }
+
+            string strippedName = current.name;
+            int colonIndex = strippedName.IndexOf(':');
+            if (colonIndex >= 0 && colonIndex < strippedName.Length - 1)
+            {
+                strippedName = strippedName.Substring(colonIndex + 1);
+                if (string.Equals(strippedName, targetName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return current;
+                }
+            }
+
+            for (int i = 0; i < current.childCount; i++)
+            {
+                Transform found = FindBoneRecursive(current.GetChild(i), targetName);
+                if (found != null) return found;
+            }
+
+            return null;
+        }
+
+        private void ApplyHolsteredOffsets(CharacterBodyScale bodyScale)
+        {
+            Vector3 pos = holsteredLocalPosition;
+            Vector3 rot = holsteredLocalRotation;
+            Vector3 scale = holsteredLocalScale;
+
+            string profileId = bodyScale != null ? bodyScale.EffectiveProfileId : null;
+            if (!string.IsNullOrEmpty(profileId) && holsteredProfileOverrides != null)
+            {
+                for (int i = 0; i < holsteredProfileOverrides.Count; i++)
+                {
+                    if (string.Equals(holsteredProfileOverrides[i].profileId, profileId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        pos = holsteredProfileOverrides[i].localPosition;
+                        rot = holsteredProfileOverrides[i].localRotation;
+                        scale = holsteredProfileOverrides[i].localScale;
+                        break;
+                    }
+                }
+            }
+
+            if (bodyScale != null)
+            {
+                scale *= bodyScale.EffectivePropScale;
+            }
+
+            transform.localPosition = pos;
+            transform.localRotation = Quaternion.Euler(rot);
+            transform.localScale = scale;
+        }
+
         [ContextMenu("Capture Current Transform as Default Offsets")]
         private void CaptureCurrentTransform()
         {
@@ -135,6 +303,15 @@ namespace Neymanoff.HumanoidWardrobe
             localRotation = transform.localRotation.eulerAngles;
             localScale = transform.localScale;
             Debug.Log($"[HumanoidAttachmentPoint] Captured default offsets for {gameObject.name}");
+        }
+
+        [ContextMenu("Capture Current Transform as Holstered Offsets")]
+        private void CaptureHolsteredTransform()
+        {
+            holsteredLocalPosition = transform.localPosition;
+            holsteredLocalRotation = transform.localRotation.eulerAngles;
+            holsteredLocalScale = transform.localScale;
+            Debug.Log($"[HumanoidAttachmentPoint] Captured holstered offsets for {gameObject.name}");
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -153,6 +330,25 @@ namespace Neymanoff.HumanoidWardrobe
             localScale = sc;
             autoMirrorForLeftSlot = autoMirror;
             profileOverrides = overrides != null ? new List<ProfileTransformOverride>(overrides) : new List<ProfileTransformOverride>();
+        }
+
+        /// <summary>
+        /// Testing helper to configure holstered options in-memory.
+        /// </summary>
+        public void ConfigureHolsteredForTest(
+            bool supports,
+            HumanBodyBones bone,
+            Vector3 pos,
+            Vector3 rot,
+            Vector3 scale,
+            IEnumerable<ProfileTransformOverride> profileOverrides = null)
+        {
+            supportsHolsteredState = supports;
+            holsteredBone = bone;
+            holsteredLocalPosition = pos;
+            holsteredLocalRotation = rot;
+            holsteredLocalScale = scale;
+            holsteredProfileOverrides = profileOverrides != null ? new List<ProfileTransformOverride>(profileOverrides) : new List<ProfileTransformOverride>();
         }
 #endif
     }

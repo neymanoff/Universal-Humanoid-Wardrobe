@@ -53,7 +53,15 @@ namespace Neymanoff.HumanoidWardrobe
         public static WardrobeLoadout FromJson(string json)
         {
             if (string.IsNullOrEmpty(json)) return new WardrobeLoadout();
-            return JsonUtility.FromJson<WardrobeLoadout>(json) ?? new WardrobeLoadout();
+            try
+            {
+                return JsonUtility.FromJson<WardrobeLoadout>(json) ?? new WardrobeLoadout();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[WardrobeLoadout] Failed to parse JSON: {ex.Message}");
+                return new WardrobeLoadout();
+            }
         }
     }
 }

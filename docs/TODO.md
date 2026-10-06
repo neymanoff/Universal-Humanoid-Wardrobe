@@ -20,6 +20,7 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 7** | Package Validation, Docs & Demo Polish | 🔵 High | ✅ Completed |
 | **Phase 8** | Interactive In-Editor Acceptance Testing & Feedback | 🔴 Critical | 🔄 In Review |
 | **Phase 9** | Character Scaling, Body Profiles & Adaptive Fitting | 🟡 High | 🛠️ Implemented |
+| **Phase 10** | Tactical/Survival Slots & Dual Socket States (Drawn/Holstered) | 🟡 High | 🛠️ Implemented |
 
 ---
 
@@ -196,4 +197,25 @@ Adaptive humanoid scaling and fitting supporting both shared archetypes/races (D
   - [x] Test attachment point adaptive offsets and prop scaling in `AdaptiveWardrobeProfileTests.cs`.
   - [x] Test profile-specific prefab resolution on `WardrobeItemSO`.
   - [x] Test full `WardrobeManager` integration with `CharacterBodyScale`.
+
+---
+
+## Phase 10: Tactical/Survival Slots & Dual Socket States (🛠️ [IMPLEMENTED])
+
+Generalization of wardrobe slots and weapon states to support tactical shooters and survival games:
+- [x] **10.1. Tactical & Survival Slot Expansions**:
+  - [x] Expand `EquipmentSlot` enum with modern and survival categories: `TacticalVest`, `Backpack`, `Holster`, `FaceMask`, `Belt`.
+  - [x] Map default bones in `WardrobeManager.GetDefaultBoneForSlot` for all new slots.
+- [x] **10.2. Dual Socket Attachment States (`Drawn` vs `Holstered`)**:
+  - [x] Implement `SocketAttachmentState` enum (`Drawn = 0`, `Holstered = 1`).
+  - [x] Extend `HumanoidAttachmentPoint` with configurable holstered bone, local transform offsets, and per-profile holstered overrides.
+  - [x] Add `SetSocketState` on `HumanoidAttachmentPoint` for runtime re-parenting between active in-hand and holstered positions.
+  - [x] Add greybox hierarchy fallback resolution (`ResolveBoneFallback`) for non-humanoid/testbed rigs.
+- [x] **10.3. WardrobeManager Socket State Control & Events**:
+  - [x] Add `SetItemSocketState(EquipmentSlot slot, SocketAttachmentState state)` and `GetItemSocketState(EquipmentSlot slot)`.
+  - [x] Add `event Action<EquipmentSlot, SocketAttachmentState> OnSocketStateChanged`.
+- [x] **10.4. Automated NUnit Test Coverage**:
+  - [x] Verify slot resolution for all tactical and survival categories (`TacticalAndSocketStateTests.cs`).
+  - [x] Verify roundtrip JSON serialization of tactical loadouts.
+  - [x] Verify transition between Drawn and Holstered states, re-parenting, profile overrides, and event emission.
 

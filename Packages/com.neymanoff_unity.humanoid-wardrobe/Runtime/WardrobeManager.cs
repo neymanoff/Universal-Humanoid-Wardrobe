@@ -21,6 +21,11 @@ namespace Neymanoff.HumanoidWardrobe
         OffHand = 9,
         LeftRing = 10,
         RightRing = 11,
+        TacticalVest = 12,
+        Backpack = 13,
+        Holster = 14,
+        FaceMask = 15,
+        Belt = 16
     }
 
     /// <summary>
@@ -69,6 +74,7 @@ namespace Neymanoff.HumanoidWardrobe
         public event Action<EquipmentSlot, WardrobeItemSO, GameObject> OnItemEquipped;
         public event Action<EquipmentSlot, WardrobeItemSO> OnItemUnequipped;
         public event Action<WardrobeLoadout> OnLoadoutChanged;
+        public event Action<EquipmentSlot, SocketAttachmentState> OnSocketStateChanged;
 
         // Legacy compatibility event
         public event Action<EquipmentSlot, GameObject> OnEquipmentChanged;
@@ -76,6 +82,45 @@ namespace Neymanoff.HumanoidWardrobe
         public Animator CharacterAnimator => _animator;
         public CharacterBodyScale BodyScale => _bodyScale;
         public IReadOnlyList<EquippedItemInstance> EquippedInstances => _equippedInstances;
+
+        /// <summary>
+        /// Transitions an equipped item between in-hand (Drawn) and stowed (Holstered) attachment states.
+        /// </summary>
+        public bool SetItemSocketState(EquipmentSlot slot, SocketAttachmentState state)
+        {
+            if (!_slotToInstance.TryGetValue(slot, out var instance) || instance?.InstanceObject == null)
+            {
+                return false;
+            }
+
+            if (instance.InstanceObject.TryGetComponent<HumanoidAttachmentPoint>(out var attachment))
+            {
+                bool isLeftSlot = (slot == EquipmentSlot.OffHand || slot == EquipmentSlot.LeftRing);
+                bool changed = attachment.SetSocketState(state, _animator, _bodyScale, slot, isLeftSlot);
+                if (changed)
+                {
+                    OnSocketStateChanged?.Invoke(slot, state);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the current socket attachment state of the item in the specified slot.
+        /// </summary>
+        public SocketAttachmentState GetItemSocketState(EquipmentSlot slot)
+        {
+            if (_slotToInstance.TryGetValue(slot, out var instance) && instance?.InstanceObject != null)
+            {
+                if (instance.InstanceObject.TryGetComponent<HumanoidAttachmentPoint>(out var attachment))
+                {
+                    return attachment.CurrentSocketState;
+                }
+            }
+            return SocketAttachmentState.Drawn;
+        }
 
         /// <summary>
         /// Explicitly assigns or swaps the character body scale profile component.
@@ -219,7 +264,17 @@ namespace Neymanoff.HumanoidWardrobe
                     ? attachment.TargetBone
                     : GetDefaultBoneForSlot(slot);
 
-                Transform boneTransform = _animator != null ? _animator.GetBoneTransform(targetBone) : null;
+                Transform boneTransform = null;
+                if (_animator != null && _animator.isHuman && _animator.avatar != null)
+                {
+                    boneTransform = _animator.GetBoneTransform(targetBone);
+                }
+
+                if (boneTransform == null && _animator != null)
+                {
+                    boneTransform = HumanoidAttachmentPoint.ResolveBoneFallback(_animator.transform, targetBone);
+                }
+
                 if (boneTransform != null)
                 {
                     spawnedInstance.transform.SetParent(boneTransform, false);
@@ -403,14 +458,19 @@ namespace Neymanoff.HumanoidWardrobe
             return slot switch
             {
                 EquipmentSlot.Head => HumanBodyBones.Head,
+                EquipmentSlot.FaceMask => HumanBodyBones.Head,
                 EquipmentSlot.Neck => HumanBodyBones.Neck,
                 EquipmentSlot.Chest => HumanBodyBones.Chest,
+                EquipmentSlot.TacticalVest => HumanBodyBones.Chest,
+                EquipmentSlot.Backpack => HumanBodyBones.Chest,
                 EquipmentSlot.Shoulders => HumanBodyBones.Chest,
                 EquipmentSlot.Back => HumanBodyBones.Chest,
                 EquipmentSlot.MainHand => HumanBodyBones.RightHand,
                 EquipmentSlot.OffHand => HumanBodyBones.LeftHand,
                 EquipmentSlot.LeftRing => HumanBodyBones.LeftRingProximal,
                 EquipmentSlot.RightRing => HumanBodyBones.RightRingProximal,
+                EquipmentSlot.Holster => HumanBodyBones.RightUpperLeg,
+                EquipmentSlot.Belt => HumanBodyBones.Hips,
                 _ => HumanBodyBones.Hips
             };
         }
