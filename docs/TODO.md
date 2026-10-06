@@ -36,6 +36,7 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 - [x] **0.3. Universal Onboarding Rules**:
   - [x] Create root [AGENTS.md](../AGENTS.md) for universal discovery by all AI IDEs and agents.
   - [x] Update [docs/TEAM_AGREEMENTS.md](TEAM_AGREEMENTS.md) to define collaboration protocols.
+  - [x] Author comprehensive [docs/LEGACY_AUDIT.md](LEGACY_AUDIT.md) auditing lineage and refactoring from `Legends: Legacy of the Lost`.
 
 ---
 
@@ -170,3 +171,18 @@ Hands-on developer verification in Unity Editor PlayMode:
 - [ ] Test pressing `[F5]` to save loadout preset, `[C]` to unequip all, and `[F9]` to restore saved loadout.
 - [ ] Test 360° character inspection via left-click mouse drag.
 - [ ] Gather developer UX feedback and apply any requested behavioral tweaks.
+
+---
+
+## Phase 9: Character Scaling, Racial Proportions & Dynamic Fitting (🔮 Backlog)
+
+Adaptive humanoid scaling for diverse body types and fantasy races (dwarfs, orcs, giants, elves):
+- [ ] **9.1. Non-Uniform Bone Scaling & Proportions**:
+  - [ ] Support skeletons with scaled bone hierarchies (e.g., shorter stout legs for dwarfs, widened shoulders for orcs).
+  - [ ] Ensure `SkinnedMeshRemapper` correctly inherits bone local and global scale vectors without squashing or stretching artifacts.
+- [ ] **9.2. Attachment Point Adaptive Offsets & Scales**:
+  - [ ] Introduce scale multipliers and socket offset compensation on `HumanoidAttachmentPoint` based on character race / scale profile.
+  - [ ] Scale rigid props (weapons, helmets, shields) proportionally to character anatomy.
+- [ ] **9.3. Morph/BlendShape Proportion Normalization**:
+  - [ ] Investigate universal blendshape morph targets to adapt standard armor geometries to heavy/thin/muscular character silhouettes.
+

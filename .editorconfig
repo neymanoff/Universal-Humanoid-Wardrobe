@@ -1,0 +1,35 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.cs]
+# Naming rule for all private fields (including Unity serialized fields)
+dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_with_underscore.style = prefix_underscore_camel_case
+dotnet_naming_rule.private_fields_with_underscore.severity = suggestion
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.prefix_underscore_camel_case.required_prefix = _
+dotnet_naming_style.prefix_underscore_camel_case.capitalization = camel_case
+
+# ReSharper / Rider Unity plugin naming rules
+resharper_csharp_naming_rule.unity_serialized_field = _$LOWER_CAMEL_CASE$, $LOWER_CAMEL_CASE$
+resharper_unity_serialized_field_naming_rule = _$LOWER_CAMEL_CASE$, $LOWER_CAMEL_CASE$
+resharper_unity_serialized_field_prefix = _
+resharper_unity_serialized_field_style = lower_camel_case
+
+# Disable false-positive "Redundant 'SerializeField' attribute" inspection in Rider
+resharper_unity_redundant_serialize_field_attribute_highlighting = none
+resharper_redundant_serialize_field_attribute_highlighting = none
+resharper_unity_redundant_attribute_on_target_highlighting = none
+
+[*.{json,asmdef}]
+indent_size = 2
