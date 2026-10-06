@@ -18,7 +18,8 @@ For repository setup and Git LFS recovery history, see [docs/DEVELOPMENT.md](DEV
 | **Phase 5** | UPM Samples Separation (`Samples~/Demo`) | 🟢 Medium | ✅ Completed |
 | **Phase 6** | Comprehensive Automated NUnit Test Suite | 🔴 Critical | ✅ Completed |
 | **Phase 7** | Package Validation, Docs & Demo Polish | 🔵 High | ✅ Completed |
-| **Phase 8** | Interactive In-Editor Acceptance Testing & Feedback | 🔴 Critical | 🔄 Next |
+| **Phase 8** | Interactive In-Editor Acceptance Testing & Feedback | 🔴 Critical | 🔄 In Review |
+| **Phase 9** | Character Scaling, Body Profiles & Adaptive Fitting | 🟡 High | 🛠️ Implemented |
 
 ---
 
@@ -174,15 +175,25 @@ Hands-on developer verification in Unity Editor PlayMode:
 
 ---
 
-## Phase 9: Character Scaling, Racial Proportions & Dynamic Fitting (🔮 Backlog)
+## Phase 9: Character Scaling, Body Profiles & Adaptive Fitting (🛠️ [IMPLEMENTED])
 
-Adaptive humanoid scaling for diverse body types and fantasy races (dwarfs, orcs, giants, elves):
-- [ ] **9.1. Non-Uniform Bone Scaling & Proportions**:
-  - [ ] Support skeletons with scaled bone hierarchies (e.g., shorter stout legs for dwarfs, widened shoulders for orcs).
-  - [ ] Ensure `SkinnedMeshRemapper` correctly inherits bone local and global scale vectors without squashing or stretching artifacts.
-- [ ] **9.2. Attachment Point Adaptive Offsets & Scales**:
-  - [ ] Introduce scale multipliers and socket offset compensation on `HumanoidAttachmentPoint` based on character race / scale profile.
-  - [ ] Scale rigid props (weapons, helmets, shields) proportionally to character anatomy.
-- [ ] **9.3. Morph/BlendShape Proportion Normalization**:
-  - [ ] Investigate universal blendshape morph targets to adapt standard armor geometries to heavy/thin/muscular character silhouettes.
+Adaptive humanoid scaling and fitting supporting both shared archetypes/races (Dwarfs, Orcs, Giants, Elves) and granular individual/one-off character fine-tuning:
+- [x] **9.1. Body Scale Profile & Character Component Architecture**:
+  - [x] Implement `BodyScaleProfileSO` (archetype ScriptableObject holding `profileId`, `propScaleMultiplier`, default slot socket offsets, and default morph weights).
+  - [x] Implement `CharacterBodyScale` component (attached to character, auto-wired by `WardrobeManager`, providing cascading resolution: Instance Overrides -> Archetype Profile -> Default Fallback).
+  - [x] Support granular per-character one-off overrides: custom prop scale multiplier, per-slot custom socket offsets, and individual morph overrides without needing a new ScriptableObject.
+- [x] **9.2. Adaptive Sockets & Attachment Point Scaling**:
+  - [x] Extend `HumanoidAttachmentPoint` with `profileOverrides` (per-profile local pos/rot/scale).
+  - [x] Update `ApplyOffsets` to accept `CharacterBodyScale` and `EquipmentSlot`, applying cascading resolution and auto-mirroring.
+  - [x] Provide context menu action `Capture Transform as Default Offsets` for fast visual authoring.
+- [x] **9.3. Profile-Specific Prefab Overrides**:
+  - [x] Add `profilePrefabOverrides` to `WardrobeItemSO` with `GetPrefabForProfile(string profileId)` fallback.
+  - [x] Update `WardrobeManager.Equip` to spawn profile-specific visual model when available.
+- [x] **9.4. Synchronized Body Morphs / BlendShapes**:
+  - [x] Automatically synchronize active character body morphs to newly equipped clothing SkinnedMeshRenderers matching blendshape names.
+- [x] **9.5. Automated NUnit Verification Suite**:
+  - [x] Test cascading resolution (Instance -> Profile -> Default) in `CharacterBodyScaleTests.cs`.
+  - [x] Test attachment point adaptive offsets and prop scaling in `AdaptiveWardrobeProfileTests.cs`.
+  - [x] Test profile-specific prefab resolution on `WardrobeItemSO`.
+  - [x] Test full `WardrobeManager` integration with `CharacterBodyScale`.
 

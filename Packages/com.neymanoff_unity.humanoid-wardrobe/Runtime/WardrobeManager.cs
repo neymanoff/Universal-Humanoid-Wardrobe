@@ -61,6 +61,7 @@ namespace Neymanoff.HumanoidWardrobe
         [SerializeField] private List<SkinnedMeshRenderer> morphTargets = new();
 
         private Animator _animator;
+        private CharacterBodyScale _bodyScale;
         private readonly Dictionary<EquipmentSlot, EquippedItemInstance> _slotToInstance = new();
         private readonly List<EquippedItemInstance> _equippedInstances = new();
 
@@ -73,11 +74,22 @@ namespace Neymanoff.HumanoidWardrobe
         public event Action<EquipmentSlot, GameObject> OnEquipmentChanged;
 
         public Animator CharacterAnimator => _animator;
+        public CharacterBodyScale BodyScale => _bodyScale;
         public IReadOnlyList<EquippedItemInstance> EquippedInstances => _equippedInstances;
+
+        /// <summary>
+        /// Explicitly assigns or swaps the character body scale profile component.
+        /// </summary>
+        public void SetBodyScale(CharacterBodyScale bodyScale)
+        {
+            _bodyScale = bodyScale;
+            UpdateBodyMasksAndBlendshapes();
+        }
 
         private void Awake()
         {
             _animator = GetComponent<Animator>();
+            _bodyScale = GetComponent<CharacterBodyScale>();
 
             if (_animator == null || _animator.avatar == null || !_animator.isHuman)
             {
@@ -100,11 +112,12 @@ namespace Neymanoff.HumanoidWardrobe
         }
 
         /// <summary>
-        /// Equips a WardrobeItemSO into a target slot with rule validation and multi-slot occupancy.
+        /// Equips a WardrobeItemSO into a target slot with rule validation, profile adaptation, and multi-slot occupancy.
         /// </summary>
         public EquipResult Equip(WardrobeItemSO itemSO, EquipmentSlot requestedSlot)
         {
-            EquipResultStatus status = EquipmentRuleResolver.ValidateEquipRequest(itemSO, requestedSlot);
+            string profileId = _bodyScale != null ? _bodyScale.EffectiveProfileId : null;
+            EquipResultStatus status = EquipmentRuleResolver.ValidateEquipRequest(itemSO, requestedSlot, profileId);
             if (status != EquipResultStatus.Success)
             {
                 return EquipResult.Failed(status, $"Cannot equip {itemSO?.ItemName ?? "null"} into {requestedSlot} ({status}).");
@@ -117,9 +130,10 @@ namespace Neymanoff.HumanoidWardrobe
                 UnequipInternal(conflictingSlots[i], suppressLoadoutEvent: true);
             }
 
-            // Instantiate visual prefab
-            GameObject spawnedInstance = Instantiate(itemSO.ItemPrefab, transform, false);
-            spawnedInstance.name = $"{itemSO.ItemPrefab.name}_{requestedSlot}";
+            // Resolve profile-specific prefab variant (or default fallback)
+            GameObject prefabToSpawn = itemSO.GetPrefabForProfile(profileId);
+            GameObject spawnedInstance = Instantiate(prefabToSpawn, transform, false);
+            spawnedInstance.name = $"{prefabToSpawn.name}_{requestedSlot}";
 
             // Bind to skeleton
             bool bindSuccess = BindSpawnedInstance(spawnedInstance, requestedSlot);
@@ -195,6 +209,7 @@ namespace Neymanoff.HumanoidWardrobe
             if (spawnedInstance.TryGetComponent<SkinnedMeshRemapper>(out var remapper))
             {
                 remapper.Remap(_animator.transform);
+                SynchronizeBodyMorphs(spawnedInstance);
                 return true;
             }
 
@@ -209,7 +224,7 @@ namespace Neymanoff.HumanoidWardrobe
                 {
                     spawnedInstance.transform.SetParent(boneTransform, false);
                     bool isLeftSlot = (slot == EquipmentSlot.OffHand || slot == EquipmentSlot.LeftRing);
-                    attachment.ApplyOffsets(isLeftSlot);
+                    attachment.ApplyOffsets(isLeftSlot, _bodyScale, slot);
                     return true;
                 }
 
@@ -444,7 +459,9 @@ namespace Neymanoff.HumanoidWardrobe
                 bodyPart.renderer.enabled = !shouldHide;
             }
 
-            // 3. Update shrink blendshapes on configured morph target renderers
+            // 3. Update shrink blendshapes and body archetype morphs on configured morph target renderers
+            Dictionary<string, float> effectiveMorphs = _bodyScale != null ? _bodyScale.GetEffectiveMorphWeights() : null;
+
             for (int i = 0; i < morphTargets.Count; i++)
             {
                 SkinnedMeshRenderer morphTarget = morphTargets[i];
@@ -463,6 +480,47 @@ namespace Neymanoff.HumanoidWardrobe
                     else if (shapeName.StartsWith("Shrink_", StringComparison.OrdinalIgnoreCase))
                     {
                         morphTarget.SetBlendShapeWeight(b, 0f);
+                    }
+                    else if (effectiveMorphs != null && effectiveMorphs.TryGetValue(shapeName, out float weight))
+                    {
+                        morphTarget.SetBlendShapeWeight(b, weight);
+                    }
+                }
+            }
+
+            // 4. Synchronize body morphs across all equipped clothing items
+            for (int i = 0; i < _equippedInstances.Count; i++)
+            {
+                if (_equippedInstances[i].InstanceObject != null)
+                {
+                    SynchronizeBodyMorphs(_equippedInstances[i].InstanceObject);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Synchronizes active body morph blendshape weights to matching blendshapes on clothing items.
+        /// </summary>
+        public void SynchronizeBodyMorphs(GameObject itemInstance)
+        {
+            if (_bodyScale == null || itemInstance == null) return;
+
+            Dictionary<string, float> effectiveWeights = _bodyScale.GetEffectiveMorphWeights();
+            if (effectiveWeights.Count == 0) return;
+
+            SkinnedMeshRenderer[] renderers = itemInstance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            for (int r = 0; r < renderers.Length; r++)
+            {
+                SkinnedMeshRenderer rend = renderers[r];
+                if (rend == null || rend.sharedMesh == null) continue;
+
+                Mesh mesh = rend.sharedMesh;
+                for (int b = 0; b < mesh.blendShapeCount; b++)
+                {
+                    string shapeName = mesh.GetBlendShapeName(b);
+                    if (effectiveWeights.TryGetValue(shapeName, out float weight))
+                    {
+                        rend.SetBlendShapeWeight(b, weight);
                     }
                 }
             }

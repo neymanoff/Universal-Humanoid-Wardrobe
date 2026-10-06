@@ -17,6 +17,25 @@ namespace Neymanoff.HumanoidWardrobe
     }
 
     /// <summary>
+    /// Alternative 3D prefab used for a specific character body profile (e.g. Dwarf, Orc).
+    /// </summary>
+    [System.Serializable]
+    public struct ProfilePrefabOverride
+    {
+        [Tooltip("Target body profile identifier (e.g. 'Dwarf', 'Orc', 'Heavy', 'Female').")]
+        public string profileId;
+
+        [Tooltip("Alternative 3D prefab spawned when equipped on a character matching this profile.")]
+        public GameObject prefab;
+
+        public ProfilePrefabOverride(string profileId, GameObject prefab)
+        {
+            this.profileId = profileId;
+            this.prefab = prefab;
+        }
+    }
+
+    /// <summary>
     /// ScriptableObject representing an equippable item in the wardrobe system.
     /// Holds a stable ItemId, slot occupancy rules, UI metadata, and the 3D prefab.
     /// </summary>
@@ -48,12 +67,38 @@ namespace Neymanoff.HumanoidWardrobe
         [Tooltip("3D prefab to spawn. Must contain SkinnedMeshRemapper or HumanoidAttachmentPoint.")]
         [SerializeField] private GameObject itemPrefab;
 
+        [Header("Profile / Variant Prefabs")]
+        [Tooltip("Alternative 3D prefabs for specific body profiles (e.g. custom mesh for Dwarf or Orc). If no match is found, ItemPrefab is used as fallback.")]
+        [SerializeField] private List<ProfilePrefabOverride> profilePrefabOverrides = new();
+
         [Header("Body Clipping Prevention")]
         [Tooltip("Anatomical regions of the base character body concealed by this item. Concealed modular sub-meshes will be deactivated.")]
         [SerializeField] private BodyPartMask hiddenBodyParts = BodyPartMask.None;
 
         [Tooltip("Blendshape names on the base character body to set to 100% weight to tuck/shrink skin under this clothing item.")]
         [SerializeField] private List<string> shrinkBlendShapes = new();
+
+        public IReadOnlyList<ProfilePrefabOverride> ProfilePrefabOverrides => profilePrefabOverrides;
+
+        /// <summary>
+        /// Retrieves the appropriate 3D prefab for the specified body profile.
+        /// Falls back to ItemPrefab if no profile match is found or profileId is null/empty.
+        /// </summary>
+        public GameObject GetPrefabForProfile(string profileId)
+        {
+            if (!string.IsNullOrEmpty(profileId) && profilePrefabOverrides != null)
+            {
+                for (int i = 0; i < profilePrefabOverrides.Count; i++)
+                {
+                    if (string.Equals(profilePrefabOverrides[i].profileId, profileId, System.StringComparison.OrdinalIgnoreCase) &&
+                        profilePrefabOverrides[i].prefab != null)
+                    {
+                        return profilePrefabOverrides[i].prefab;
+                    }
+                }
+            }
+            return itemPrefab;
+        }
 
         public string ItemId
         {
@@ -173,7 +218,8 @@ namespace Neymanoff.HumanoidWardrobe
             IEnumerable<EquipmentSlot> allowed,
             IEnumerable<EquipmentSlot> additional = null,
             BodyPartMask hiddenParts = BodyPartMask.None,
-            IEnumerable<string> shrinkShapes = null)
+            IEnumerable<string> shrinkShapes = null,
+            IEnumerable<ProfilePrefabOverride> prefabOverrides = null)
         {
             this.itemId = id;
             this.itemName = name;
@@ -182,6 +228,7 @@ namespace Neymanoff.HumanoidWardrobe
             this.additionalOccupiedSlots = additional != null ? new List<EquipmentSlot>(additional) : new List<EquipmentSlot>();
             this.hiddenBodyParts = hiddenParts;
             this.shrinkBlendShapes = shrinkShapes != null ? new List<string>(shrinkShapes) : new List<string>();
+            this.profilePrefabOverrides = prefabOverrides != null ? new List<ProfilePrefabOverride>(prefabOverrides) : new List<ProfilePrefabOverride>();
         }
 #endif
     }

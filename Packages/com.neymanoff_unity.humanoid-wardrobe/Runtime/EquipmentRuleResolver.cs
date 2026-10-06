@@ -13,12 +13,20 @@ namespace Neymanoff.HumanoidWardrobe
         /// </summary>
         public static EquipResultStatus ValidateEquipRequest(WardrobeItemSO item, EquipmentSlot requestedSlot)
         {
+            return ValidateEquipRequest(item, requestedSlot, null);
+        }
+
+        /// <summary>
+        /// Validates whether the item can be equipped into the requested slot for a specific character body profile.
+        /// </summary>
+        public static EquipResultStatus ValidateEquipRequest(WardrobeItemSO item, EquipmentSlot requestedSlot, string profileId)
+        {
             if (item == null)
             {
                 return EquipResultStatus.ItemNull;
             }
 
-            if (item.ItemPrefab == null)
+            if (item.GetPrefabForProfile(profileId) == null)
             {
                 return EquipResultStatus.MissingPrefab;
             }
