@@ -101,6 +101,60 @@ namespace Neymanoff.HumanoidWardrobe
         public IReadOnlyList<ProfileTransformOverride> HolsteredProfileOverrides => holsteredProfileOverrides;
 
         /// <summary>
+        /// Resolves the effective humanoid target bone for the specified equipment slot.
+        /// If UseCustomBone is enabled and the item is equipped into a left-side slot with AutoMirrorForLeftSlot,
+        /// right-side bones (such as RightHand) are automatically mirrored to their left-side counterparts (LeftHand).
+        /// </summary>
+        public HumanBodyBones ResolveTargetBone(EquipmentSlot slot, bool isLeftSlot = false)
+        {
+            if (!useCustomBone)
+            {
+                return WardrobeManager.GetDefaultBoneForSlot(slot);
+            }
+
+            if (isLeftSlot && autoMirrorForLeftSlot)
+            {
+                return MirrorBoneToLeft(targetBone);
+            }
+
+            return targetBone;
+        }
+
+        /// <summary>
+        /// Mirrors a right-side humanoid bone to its left-side anatomical counterpart.
+        /// </summary>
+        public static HumanBodyBones MirrorBoneToLeft(HumanBodyBones bone)
+        {
+            return bone switch
+            {
+                HumanBodyBones.RightHand => HumanBodyBones.LeftHand,
+                HumanBodyBones.RightLowerArm => HumanBodyBones.LeftLowerArm,
+                HumanBodyBones.RightUpperArm => HumanBodyBones.LeftUpperArm,
+                HumanBodyBones.RightShoulder => HumanBodyBones.LeftShoulder,
+                HumanBodyBones.RightUpperLeg => HumanBodyBones.LeftUpperLeg,
+                HumanBodyBones.RightLowerLeg => HumanBodyBones.LeftLowerLeg,
+                HumanBodyBones.RightFoot => HumanBodyBones.LeftFoot,
+                HumanBodyBones.RightToes => HumanBodyBones.LeftToes,
+                HumanBodyBones.RightRingProximal => HumanBodyBones.LeftRingProximal,
+                HumanBodyBones.RightRingIntermediate => HumanBodyBones.LeftRingIntermediate,
+                HumanBodyBones.RightRingDistal => HumanBodyBones.LeftRingDistal,
+                HumanBodyBones.RightThumbProximal => HumanBodyBones.LeftThumbProximal,
+                HumanBodyBones.RightThumbIntermediate => HumanBodyBones.LeftThumbIntermediate,
+                HumanBodyBones.RightThumbDistal => HumanBodyBones.LeftThumbDistal,
+                HumanBodyBones.RightIndexProximal => HumanBodyBones.LeftIndexProximal,
+                HumanBodyBones.RightIndexIntermediate => HumanBodyBones.LeftIndexIntermediate,
+                HumanBodyBones.RightIndexDistal => HumanBodyBones.LeftIndexDistal,
+                HumanBodyBones.RightMiddleProximal => HumanBodyBones.LeftMiddleProximal,
+                HumanBodyBones.RightMiddleIntermediate => HumanBodyBones.LeftMiddleIntermediate,
+                HumanBodyBones.RightMiddleDistal => HumanBodyBones.LeftMiddleDistal,
+                HumanBodyBones.RightLittleProximal => HumanBodyBones.LeftLittleProximal,
+                HumanBodyBones.RightLittleIntermediate => HumanBodyBones.LeftLittleIntermediate,
+                HumanBodyBones.RightLittleDistal => HumanBodyBones.LeftLittleDistal,
+                _ => bone
+            };
+        }
+
+        /// <summary>
         /// Applies local offsets, optionally factoring in character body scale profile and left-side mirroring.
         /// </summary>
         /// <param name="isLeftSlot">True if equipped in a left-side slot (OffHand, LeftRing).</param>
@@ -202,7 +256,7 @@ namespace Neymanoff.HumanoidWardrobe
             }
             else
             {
-                HumanBodyBones activeBone = useCustomBone ? targetBone : WardrobeManager.GetDefaultBoneForSlot(slot);
+                HumanBodyBones activeBone = ResolveTargetBone(slot, isLeftSlot);
                 Transform targetBoneTransform = null;
                 if (animator.isHuman && animator.avatar != null)
                 {
@@ -323,13 +377,17 @@ namespace Neymanoff.HumanoidWardrobe
             Vector3 rot,
             Vector3 sc,
             bool autoMirror = true,
-            IEnumerable<ProfileTransformOverride> overrides = null)
+            IEnumerable<ProfileTransformOverride> overrides = null,
+            bool useCustom = false,
+            HumanBodyBones customBone = HumanBodyBones.RightHand)
         {
             localPosition = pos;
             localRotation = rot;
             localScale = sc;
             autoMirrorForLeftSlot = autoMirror;
             profileOverrides = overrides != null ? new List<ProfileTransformOverride>(overrides) : new List<ProfileTransformOverride>();
+            useCustomBone = useCustom;
+            targetBone = customBone;
         }
 
         /// <summary>

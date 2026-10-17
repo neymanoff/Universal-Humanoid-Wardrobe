@@ -193,7 +193,8 @@ namespace Neymanoff.HumanoidWardrobe.UI
             if (droppedItem == null) return;
 
             // Validate slot compatibility
-            if (!IsItemAllowedInSlot(droppedItem, slotType))
+            bool allowDualTwoHanded = _wardrobeManager.AllowDualTwoHanded;
+            if (!IsItemAllowedInSlot(droppedItem, slotType, allowDualTwoHanded))
             {
                 Debug.LogWarning($"[EquipmentSlotUI] Item '{droppedItem.ItemName}' cannot be equipped into slot {slotType}!");
                 return;
@@ -204,21 +205,10 @@ namespace Neymanoff.HumanoidWardrobe.UI
             {
                 if (sourceSlot.Value == slotType) return;
 
-                WardrobeItemSO currentTargetItem = _currentItem;
-                if (currentTargetItem != null && IsItemAllowedInSlot(currentTargetItem, sourceSlot.Value))
+                if (_wardrobeManager.SwapSlots(sourceSlot.Value, slotType))
                 {
-                    // Swap items between source and target hands
-                    _wardrobeManager.Unequip(sourceSlot.Value);
-                    _wardrobeManager.Unequip(slotType);
-                    _wardrobeManager.Equip(droppedItem, slotType);
-                    _wardrobeManager.Equip(currentTargetItem, sourceSlot.Value);
                     return;
                 }
-
-                // Move from source slot to target slot
-                _wardrobeManager.Unequip(sourceSlot.Value);
-                _wardrobeManager.Equip(droppedItem, slotType);
-                return;
             }
 
             // Dragged directly from inventory grid into this slot (Dual-Wielding support)
@@ -252,19 +242,10 @@ namespace Neymanoff.HumanoidWardrobe.UI
             }
         }
 
-        public static bool IsItemAllowedInSlot(WardrobeItemSO item, EquipmentSlot slot)
+        public static bool IsItemAllowedInSlot(WardrobeItemSO item, EquipmentSlot slot, bool allowDualTwoHanded = false)
         {
             if (item == null) return false;
-            var allowed = item.AllowedSlots;
-            if (allowed != null && allowed.Count > 0)
-            {
-                for (int i = 0; i < allowed.Count; i++)
-                {
-                    if (allowed[i] == slot) return true;
-                }
-                return false;
-            }
-            return item.TargetSlot == slot;
+            return item.CanEquipIntoSlot(slot, allowDualTwoHanded);
         }
 
         private void CreateDragProxy(PointerEventData eventData)

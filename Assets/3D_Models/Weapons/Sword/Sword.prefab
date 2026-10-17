@@ -105,7 +105,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d9aab2901bfa994ab11bfdee4164652, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.HumanoidAttachmentPoint
-  useCustomBone: 1
+  useCustomBone: 0
   targetBone: 18
   localPosition: {x: 0, y: 0.1, z: 0}
   localRotation: {x: -20, y: -5, z: 95}

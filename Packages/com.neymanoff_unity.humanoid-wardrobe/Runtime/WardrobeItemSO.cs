@@ -122,12 +122,72 @@ namespace Neymanoff.HumanoidWardrobe
         {
             get
             {
+                if (restriction == ItemSlotRestriction.OneHanded)
+                {
+                    if (allowedSlots == null || !allowedSlots.Contains(EquipmentSlot.MainHand) || !allowedSlots.Contains(EquipmentSlot.OffHand))
+                    {
+                        return GetLegacyAllowedSlots();
+                    }
+                }
+                else if (restriction == ItemSlotRestriction.AnyRing)
+                {
+                    if (allowedSlots == null || !allowedSlots.Contains(EquipmentSlot.LeftRing) || !allowedSlots.Contains(EquipmentSlot.RightRing))
+                    {
+                        return GetLegacyAllowedSlots();
+                    }
+                }
+
                 if (allowedSlots != null && allowedSlots.Count > 0)
                 {
                     return allowedSlots;
                 }
                 return GetLegacyAllowedSlots();
             }
+        }
+
+        /// <summary>
+        /// Returns true if this item is configured as a two-handed weapon occupying both hands by default.
+        /// </summary>
+        public bool IsTwoHandedWeapon
+        {
+            get
+            {
+                if (restriction == ItemSlotRestriction.TwoHanded)
+                {
+                    return true;
+                }
+
+                if (additionalOccupiedSlots != null &&
+                    additionalOccupiedSlots.Contains(EquipmentSlot.OffHand) &&
+                    CanEquipIntoSlot(EquipmentSlot.MainHand, false))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns all slots this item can be equipped into, factoring in whether dual two-handed weapons are permitted.
+        /// </summary>
+        public IReadOnlyList<EquipmentSlot> GetAllowedSlots(bool allowDualTwoHanded)
+        {
+            if (allowDualTwoHanded && IsTwoHandedWeapon)
+            {
+                return new List<EquipmentSlot> { EquipmentSlot.MainHand, EquipmentSlot.OffHand };
+            }
+            return AllowedSlots;
+        }
+
+        /// <summary>
+        /// Returns true if this item can be equipped into both MainHand and OffHand (e.g. 1H weapon, or 2H weapon with allowDualTwoHanded).
+        /// Pure off-hand items (like shields) return false because they cannot be equipped into MainHand.
+        /// </summary>
+        public bool IsDualHandCapable(bool allowDualTwoHanded = false)
+        {
+            return CanEquipIntoSlot(EquipmentSlot.MainHand, allowDualTwoHanded) &&
+                   CanEquipIntoSlot(EquipmentSlot.OffHand, allowDualTwoHanded);
         }
 
         public IReadOnlyList<EquipmentSlot> AdditionalOccupiedSlots => additionalOccupiedSlots;
@@ -141,8 +201,8 @@ namespace Neymanoff.HumanoidWardrobe
                 itemId = name.ToLowerInvariant();
             }
 
-            // Sync legacy fields with new lists if new lists are empty
-            if (allowedSlots == null || allowedSlots.Count == 0)
+            // Sync legacy fields with new lists if new lists are empty or out-of-sync with restriction
+            if (allowedSlots == null || allowedSlots.Count == 0 || restriction != ItemSlotRestriction.SpecificSlotOnly)
             {
                 allowedSlots = new List<EquipmentSlot>(GetLegacyAllowedSlots());
             }
@@ -158,7 +218,15 @@ namespace Neymanoff.HumanoidWardrobe
         /// </summary>
         public bool CanEquipIntoSlot(EquipmentSlot slot)
         {
-            IReadOnlyList<EquipmentSlot> slots = AllowedSlots;
+            return CanEquipIntoSlot(slot, false);
+        }
+
+        /// <summary>
+        /// Checks if this item can be equipped into the requested slot, optionally allowing dual two-handed weapons.
+        /// </summary>
+        public bool CanEquipIntoSlot(EquipmentSlot slot, bool allowDualTwoHanded)
+        {
+            IReadOnlyList<EquipmentSlot> slots = GetAllowedSlots(allowDualTwoHanded);
             for (int i = 0; i < slots.Count; i++)
             {
                 if (slots[i] == slot) return true;
@@ -169,15 +237,31 @@ namespace Neymanoff.HumanoidWardrobe
         /// <summary>
         /// Legacy compatibility check.
         /// </summary>
-        public bool CanFitInSlot(EquipmentSlot slot) => CanEquipIntoSlot(slot);
+        public bool CanFitInSlot(EquipmentSlot slot) => CanEquipIntoSlot(slot, false);
 
         /// <summary>
         /// Returns all slots that will be occupied if equipped into the given primary slot.
         /// </summary>
         public List<EquipmentSlot> GetOccupiedSlots(EquipmentSlot requestedSlot)
         {
+            return GetOccupiedSlots(requestedSlot, false);
+        }
+
+        /// <summary>
+        /// Returns all slots that will be occupied if equipped into the given primary slot,
+        /// factoring in whether dual two-handed weapons are permitted.
+        /// </summary>
+        public List<EquipmentSlot> GetOccupiedSlots(EquipmentSlot requestedSlot, bool allowDualTwoHanded)
+        {
             List<EquipmentSlot> occupied = new() { requestedSlot };
-            if (additionalOccupiedSlots != null)
+
+            if (allowDualTwoHanded && IsTwoHandedWeapon &&
+                (requestedSlot == EquipmentSlot.MainHand || requestedSlot == EquipmentSlot.OffHand))
+            {
+                return occupied;
+            }
+
+            if (additionalOccupiedSlots != null && additionalOccupiedSlots.Count > 0)
             {
                 for (int i = 0; i < additionalOccupiedSlots.Count; i++)
                 {

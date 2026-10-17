@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -245,6 +245,176 @@ namespace Neymanoff.HumanoidWardrobe.Tests
 
             Object.DestroyImmediate(torsoMeshObj);
             Object.DestroyImmediate(cuirass);
+        }
+
+        [Test]
+        public void Equip_TwoOneHandedWeapons_AttachesToRightHandAndLeftHandRespectively()
+        {
+            var rightHandBone = new GameObject("RightHand").transform;
+            rightHandBone.SetParent(_characterObj.transform, false);
+
+            var leftHandBone = new GameObject("LeftHand").transform;
+            leftHandBone.SetParent(_characterObj.transform, false);
+
+            var weaponPrefab = new GameObject("WeaponPrefab");
+            var attachment = weaponPrefab.AddComponent<HumanoidAttachmentPoint>();
+            // Even with useCustomBone = true and RightHand, left slot must mirror to LeftHand when autoMirror is true
+            attachment.ConfigureForTest(
+                new Vector3(0.02f, 0.1f, 0f),
+                new Vector3(-20f, -5f, 85f),
+                Vector3.one,
+                autoMirror: true,
+                useCustom: true,
+                customBone: HumanBodyBones.RightHand);
+
+            var axeSO = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            axeSO.ConfigureForTest("axe", "Axe", weaponPrefab, new[] { EquipmentSlot.MainHand, EquipmentSlot.OffHand });
+
+            var swordSO = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            swordSO.ConfigureForTest("sword", "Sword", weaponPrefab, new[] { EquipmentSlot.MainHand, EquipmentSlot.OffHand });
+
+            var mainResult = _wardrobeManager.Equip(axeSO, EquipmentSlot.MainHand);
+            var offResult = _wardrobeManager.Equip(swordSO, EquipmentSlot.OffHand);
+
+            Assert.IsTrue(mainResult.IsSuccess);
+            Assert.IsTrue(offResult.IsSuccess);
+
+            GameObject mainObj = _wardrobeManager.GetEquippedItem(EquipmentSlot.MainHand);
+            GameObject offObj = _wardrobeManager.GetEquippedItem(EquipmentSlot.OffHand);
+
+            Assert.IsNotNull(mainObj);
+            Assert.IsNotNull(offObj);
+            Assert.AreEqual(rightHandBone, mainObj.transform.parent);
+            Assert.AreEqual(leftHandBone, offObj.transform.parent);
+            Assert.AreEqual(0.02f, mainObj.transform.localPosition.x, 0.001f);
+            Assert.AreEqual(-0.02f, offObj.transform.localPosition.x, 0.001f);
+
+            Object.DestroyImmediate(weaponPrefab);
+            Object.DestroyImmediate(axeSO);
+            Object.DestroyImmediate(swordSO);
+        }
+
+        [Test]
+        public void Equip_SameOneHandedWeaponInBothHands_SpawnsTwoDistinctInstancesInRightAndLeftHand()
+        {
+            var rightHandBone = new GameObject("RightHand").transform;
+            rightHandBone.SetParent(_characterObj.transform, false);
+
+            var leftHandBone = new GameObject("LeftHand").transform;
+            leftHandBone.SetParent(_characterObj.transform, false);
+
+            var axePrefab = new GameObject("AxePrefab");
+            var attachment = axePrefab.AddComponent<HumanoidAttachmentPoint>();
+            attachment.ConfigureForTest(new Vector3(0.02f, 0.1f, 0.02f), Vector3.zero, Vector3.one, autoMirror: true);
+
+            var axeSO = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            axeSO.ConfigureForTest("axe", "Axe", axePrefab, new[] { EquipmentSlot.MainHand, EquipmentSlot.OffHand });
+
+            var r1 = _wardrobeManager.Equip(axeSO, EquipmentSlot.MainHand);
+            var r2 = _wardrobeManager.Equip(axeSO, EquipmentSlot.OffHand);
+
+            Assert.IsTrue(r1.IsSuccess);
+            Assert.IsTrue(r2.IsSuccess);
+            Assert.AreEqual(2, _wardrobeManager.EquippedInstances.Count);
+
+            GameObject rightAxe = _wardrobeManager.GetEquippedItem(EquipmentSlot.MainHand);
+            GameObject leftAxe = _wardrobeManager.GetEquippedItem(EquipmentSlot.OffHand);
+
+            Assert.AreNotEqual(rightAxe, leftAxe);
+            Assert.AreEqual(rightHandBone, rightAxe.transform.parent);
+            Assert.AreEqual(leftHandBone, leftAxe.transform.parent);
+
+            Object.DestroyImmediate(axePrefab);
+            Object.DestroyImmediate(axeSO);
+        }
+
+        [Test]
+        public void Equip_OneHandedWeaponRequestedForOffHandWhenMainHandEmpty_RoutesToMainHandFirst()
+        {
+            var axeSO = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            axeSO.ConfigureForTest("axe", "Axe", _dummyPrefab, new[] { EquipmentSlot.MainHand, EquipmentSlot.OffHand });
+
+            var shieldSO = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            shieldSO.ConfigureForTest("shield", "Shield", _dummyPrefab, new[] { EquipmentSlot.OffHand });
+
+            // 1. Pure off-hand item (Shield) equips directly into OffHand even when MainHand is empty
+            var shieldResult = _wardrobeManager.Equip(shieldSO, EquipmentSlot.OffHand);
+            Assert.IsTrue(shieldResult.IsSuccess);
+            Assert.AreEqual(EquipmentSlot.OffHand, shieldResult.Instance.PrimarySlot);
+            _wardrobeManager.Unequip(EquipmentSlot.OffHand);
+
+            // 2. Dual-hand 1H weapon requested for OffHand when MainHand is empty automatically routes to MainHand
+            var axeResult = _wardrobeManager.Equip(axeSO, EquipmentSlot.OffHand);
+            Assert.IsTrue(axeResult.IsSuccess);
+            Assert.AreEqual(EquipmentSlot.MainHand, axeResult.Instance.PrimarySlot);
+            Assert.AreEqual(axeSO, _wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand));
+            Assert.IsNull(_wardrobeManager.GetEquippedItemData(EquipmentSlot.OffHand));
+
+            Object.DestroyImmediate(axeSO);
+            Object.DestroyImmediate(shieldSO);
+        }
+
+        [Test]
+        public void SwapSlots_BetweenMainHandAndOffHand_SwapsWeaponsCleanly()
+        {
+            var axeSO = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            axeSO.ConfigureForTest("axe", "Axe", _dummyPrefab, new[] { EquipmentSlot.MainHand, EquipmentSlot.OffHand });
+
+            var swordSO = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            swordSO.ConfigureForTest("sword", "Sword", _dummyPrefab, new[] { EquipmentSlot.MainHand, EquipmentSlot.OffHand });
+
+            _wardrobeManager.Equip(axeSO, EquipmentSlot.MainHand);
+            _wardrobeManager.Equip(swordSO, EquipmentSlot.OffHand);
+
+            bool swapped = _wardrobeManager.SwapSlots(EquipmentSlot.MainHand, EquipmentSlot.OffHand);
+
+            Assert.IsTrue(swapped);
+            Assert.AreEqual(swordSO, _wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand));
+            Assert.AreEqual(axeSO, _wardrobeManager.GetEquippedItemData(EquipmentSlot.OffHand));
+
+            Object.DestroyImmediate(axeSO);
+            Object.DestroyImmediate(swordSO);
+        }
+
+        [Test]
+        public void Equip_TwoHandedWeapons_WhenAllowDualTwoHandedEnabled_EquipsInBothHands()
+        {
+            var greatsword1 = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            greatsword1.ConfigureForTest(
+                "gs1",
+                "Greatsword 1",
+                _dummyPrefab,
+                new[] { EquipmentSlot.MainHand },
+                new[] { EquipmentSlot.OffHand });
+
+            var greatsword2 = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            greatsword2.ConfigureForTest(
+                "gs2",
+                "Greatsword 2",
+                _dummyPrefab,
+                new[] { EquipmentSlot.MainHand },
+                new[] { EquipmentSlot.OffHand });
+
+            // Default: AllowDualTwoHanded is false -> OffHand is rejected for a 2H weapon
+            Assert.IsFalse(_wardrobeManager.AllowDualTwoHanded);
+            var rejected = _wardrobeManager.Equip(greatsword2, EquipmentSlot.OffHand);
+            Assert.IsFalse(rejected.IsSuccess);
+            Assert.AreEqual(EquipResultStatus.InvalidSlot, rejected.Status);
+
+            // Enable AllowDualTwoHanded (special class capability)
+            _wardrobeManager.AllowDualTwoHanded = true;
+
+            var r1 = _wardrobeManager.Equip(greatsword1, EquipmentSlot.MainHand);
+            var r2 = _wardrobeManager.Equip(greatsword2, EquipmentSlot.OffHand);
+
+            Assert.IsTrue(r1.IsSuccess);
+            Assert.IsTrue(r2.IsSuccess);
+            Assert.AreEqual(2, _wardrobeManager.EquippedInstances.Count);
+            Assert.AreEqual(greatsword1, _wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand));
+            Assert.AreEqual(greatsword2, _wardrobeManager.GetEquippedItemData(EquipmentSlot.OffHand));
+
+            Object.DestroyImmediate(greatsword1);
+            Object.DestroyImmediate(greatsword2);
         }
     }
 }

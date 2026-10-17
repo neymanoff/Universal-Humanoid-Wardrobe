@@ -13,13 +13,17 @@ namespace Neymanoff.HumanoidWardrobe
         /// </summary>
         public static EquipResultStatus ValidateEquipRequest(WardrobeItemSO item, EquipmentSlot requestedSlot)
         {
-            return ValidateEquipRequest(item, requestedSlot, null);
+            return ValidateEquipRequest(item, requestedSlot, null, false);
         }
 
         /// <summary>
         /// Validates whether the item can be equipped into the requested slot for a specific character body profile.
         /// </summary>
-        public static EquipResultStatus ValidateEquipRequest(WardrobeItemSO item, EquipmentSlot requestedSlot, string profileId)
+        public static EquipResultStatus ValidateEquipRequest(
+            WardrobeItemSO item,
+            EquipmentSlot requestedSlot,
+            string profileId,
+            bool allowDualTwoHanded = false)
         {
             if (item == null)
             {
@@ -31,7 +35,7 @@ namespace Neymanoff.HumanoidWardrobe
                 return EquipResultStatus.MissingPrefab;
             }
 
-            if (!item.CanEquipIntoSlot(requestedSlot))
+            if (!item.CanEquipIntoSlot(requestedSlot, allowDualTwoHanded))
             {
                 return EquipResultStatus.InvalidSlot;
             }
@@ -40,17 +44,55 @@ namespace Neymanoff.HumanoidWardrobe
         }
 
         /// <summary>
+        /// Resolves the effective target slot for hand equipment.
+        /// Pure off-hand items (such as shields) always stay in OffHand.
+        /// Dual-hand weapons (1H weapons, or 2H weapons when allowDualTwoHanded is enabled) can only be placed in OffHand
+        /// if MainHand is already occupied by a single-hand weapon; otherwise they automatically route to MainHand first.
+        /// </summary>
+        public static EquipmentSlot ResolveEffectiveHandSlot(
+            WardrobeItemSO item,
+            EquipmentSlot requestedSlot,
+            IReadOnlyDictionary<EquipmentSlot, EquippedItemInstance> currentSlots,
+            bool allowDualTwoHanded = false)
+        {
+            if (item == null || requestedSlot != EquipmentSlot.OffHand)
+            {
+                return requestedSlot;
+            }
+
+            if (item.IsDualHandCapable(allowDualTwoHanded))
+            {
+                bool hasSingleHandWeaponInMain = false;
+                if (currentSlots != null &&
+                    currentSlots.TryGetValue(EquipmentSlot.MainHand, out var mainInstance) &&
+                    mainInstance != null &&
+                    mainInstance.OccupiedSlots.Count == 1)
+                {
+                    hasSingleHandWeaponInMain = true;
+                }
+
+                if (!hasSingleHandWeaponInMain)
+                {
+                    return EquipmentSlot.MainHand;
+                }
+            }
+
+            return requestedSlot;
+        }
+
+        /// <summary>
         /// Finds all currently occupied slots that conflict with the incoming item's required slots.
         /// </summary>
         public static List<EquipmentSlot> GetConflictingSlots(
             WardrobeItemSO item,
             EquipmentSlot requestedSlot,
-            IReadOnlyDictionary<EquipmentSlot, EquippedItemInstance> currentSlots)
+            IReadOnlyDictionary<EquipmentSlot, EquippedItemInstance> currentSlots,
+            bool allowDualTwoHanded = false)
         {
             List<EquipmentSlot> conflictingSlots = new();
             if (item == null || currentSlots == null) return conflictingSlots;
 
-            List<EquipmentSlot> neededSlots = item.GetOccupiedSlots(requestedSlot);
+            List<EquipmentSlot> neededSlots = item.GetOccupiedSlots(requestedSlot, allowDualTwoHanded);
 
             for (int i = 0; i < neededSlots.Count; i++)
             {

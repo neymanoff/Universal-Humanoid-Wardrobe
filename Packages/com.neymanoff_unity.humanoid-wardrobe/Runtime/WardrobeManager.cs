@@ -65,6 +65,10 @@ namespace Neymanoff.HumanoidWardrobe
         [Tooltip("Optional SkinnedMeshRenderers on the base character containing shrink/morph blendshapes (e.g. Shrink_Chest, Shrink_Torso).")]
         [SerializeField] private List<SkinnedMeshRenderer> morphTargets = new();
 
+        [Header("Hand & Dual-Wielding Rules")]
+        [Tooltip("If enabled (e.g. for special classes like Berserker / Titan's Grip), allows equipping Two-Handed weapons in MainHand and OffHand simultaneously.")]
+        [SerializeField] private bool allowDualTwoHanded = false;
+
         private Animator _animator;
         private CharacterBodyScale _bodyScale;
         private readonly Dictionary<EquipmentSlot, EquippedItemInstance> _slotToInstance = new();
@@ -82,6 +86,16 @@ namespace Neymanoff.HumanoidWardrobe
         public Animator CharacterAnimator => _animator;
         public CharacterBodyScale BodyScale => _bodyScale;
         public IReadOnlyList<EquippedItemInstance> EquippedInstances => _equippedInstances;
+
+        /// <summary>
+        /// Controls whether two-handed weapons can be dual-wielded in MainHand and OffHand simultaneously (for special character classes).
+        /// Defaults to false (two-handed weapons occupy both hands).
+        /// </summary>
+        public bool AllowDualTwoHanded
+        {
+            get => allowDualTwoHanded;
+            set => allowDualTwoHanded = value;
+        }
 
         /// <summary>
         /// Transitions an equipped item between in-hand (Drawn) and stowed (Holstered) attachment states.
@@ -183,18 +197,32 @@ namespace Neymanoff.HumanoidWardrobe
 
         /// <summary>
         /// Equips a WardrobeItemSO into a target slot with rule validation, profile adaptation, and multi-slot occupancy.
+        /// Dual-hand weapons (1H weapons, or 2H weapons when AllowDualTwoHanded is enabled) automatically route to MainHand
+        /// if MainHand is not already occupied by a single-hand weapon.
         /// </summary>
         public EquipResult Equip(WardrobeItemSO itemSO, EquipmentSlot requestedSlot)
         {
             string profileId = _bodyScale != null ? _bodyScale.EffectiveProfileId : null;
-            EquipResultStatus status = EquipmentRuleResolver.ValidateEquipRequest(itemSO, requestedSlot, profileId);
+            EquipResultStatus status = EquipmentRuleResolver.ValidateEquipRequest(itemSO, requestedSlot, profileId, allowDualTwoHanded);
             if (status != EquipResultStatus.Success)
             {
                 return EquipResult.Failed(status, $"Cannot equip {itemSO?.ItemName ?? "null"} into {requestedSlot} ({status}).");
             }
 
+            // Enforce 1H/Dual-2H hand rule: MainHand must be filled first before placing a dual-hand weapon into OffHand
+            EquipmentSlot effectiveSlot = EquipmentRuleResolver.ResolveEffectiveHandSlot(
+                itemSO,
+                requestedSlot,
+                _slotToInstance,
+                allowDualTwoHanded);
+
             // Resolve and clear conflicting slots (e.g. 2H weapon clears OffHand)
-            List<EquipmentSlot> conflictingSlots = EquipmentRuleResolver.GetConflictingSlots(itemSO, requestedSlot, _slotToInstance);
+            List<EquipmentSlot> conflictingSlots = EquipmentRuleResolver.GetConflictingSlots(
+                itemSO,
+                effectiveSlot,
+                _slotToInstance,
+                allowDualTwoHanded);
+
             for (int i = 0; i < conflictingSlots.Count; i++)
             {
                 UnequipInternal(conflictingSlots[i], suppressLoadoutEvent: true);
@@ -203,10 +231,10 @@ namespace Neymanoff.HumanoidWardrobe
             // Resolve profile-specific prefab variant (or default fallback)
             GameObject prefabToSpawn = itemSO.GetPrefabForProfile(profileId);
             GameObject spawnedInstance = Instantiate(prefabToSpawn, transform, false);
-            spawnedInstance.name = $"{prefabToSpawn.name}_{requestedSlot}";
+            spawnedInstance.name = $"{prefabToSpawn.name}_{effectiveSlot}";
 
             // Bind to skeleton
-            bool bindSuccess = BindSpawnedInstance(spawnedInstance, requestedSlot);
+            bool bindSuccess = BindSpawnedInstance(spawnedInstance, effectiveSlot);
             if (!bindSuccess)
             {
                 DestroyObject(spawnedInstance);
@@ -214,8 +242,8 @@ namespace Neymanoff.HumanoidWardrobe
             }
 
             // Register multi-slot occupancy
-            List<EquipmentSlot> occupiedSlots = itemSO.GetOccupiedSlots(requestedSlot);
-            EquippedItemInstance itemInstance = new(itemSO, spawnedInstance, requestedSlot, occupiedSlots);
+            List<EquipmentSlot> occupiedSlots = itemSO.GetOccupiedSlots(effectiveSlot, allowDualTwoHanded);
+            EquippedItemInstance itemInstance = new(itemSO, spawnedInstance, effectiveSlot, occupiedSlots);
 
             for (int i = 0; i < occupiedSlots.Count; i++)
             {
@@ -226,11 +254,44 @@ namespace Neymanoff.HumanoidWardrobe
             UpdateBodyMasksAndBlendshapes();
 
             // Fire events
-            OnItemEquipped?.Invoke(requestedSlot, itemSO, spawnedInstance);
-            OnEquipmentChanged?.Invoke(requestedSlot, spawnedInstance);
+            OnItemEquipped?.Invoke(effectiveSlot, itemSO, spawnedInstance);
+            OnEquipmentChanged?.Invoke(effectiveSlot, spawnedInstance);
             OnLoadoutChanged?.Invoke(GetCurrentLoadout());
 
             return EquipResult.Succeeded(itemInstance);
+        }
+
+        /// <summary>
+        /// Swaps the equipped items between two slots (e.g. MainHand and OffHand) if both items are compatible with the opposite slot.
+        /// </summary>
+        public bool SwapSlots(EquipmentSlot slotA, EquipmentSlot slotB)
+        {
+            if (slotA == slotB) return false;
+
+            WardrobeItemSO itemA = GetEquippedItemData(slotA);
+            WardrobeItemSO itemB = GetEquippedItemData(slotB);
+
+            if (itemA == null && itemB == null) return false;
+
+            if (itemA != null && !itemA.CanEquipIntoSlot(slotB, allowDualTwoHanded)) return false;
+            if (itemB != null && !itemB.CanEquipIntoSlot(slotA, allowDualTwoHanded)) return false;
+
+            if (itemA != null) UnequipInternal(slotA, suppressLoadoutEvent: true);
+            if (itemB != null) UnequipInternal(slotB, suppressLoadoutEvent: true);
+
+            // When swapping MainHand and OffHand, always equip MainHand first so OffHand dual-wield validation succeeds
+            if (slotA == EquipmentSlot.MainHand || slotB == EquipmentSlot.OffHand)
+            {
+                if (itemB != null) Equip(itemB, slotA);
+                if (itemA != null) Equip(itemA, slotB);
+            }
+            else
+            {
+                if (itemA != null) Equip(itemA, slotB);
+                if (itemB != null) Equip(itemB, slotA);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -285,9 +346,8 @@ namespace Neymanoff.HumanoidWardrobe
 
             if (spawnedInstance.TryGetComponent<HumanoidAttachmentPoint>(out var attachment))
             {
-                HumanBodyBones targetBone = attachment.UseCustomBone
-                    ? attachment.TargetBone
-                    : GetDefaultBoneForSlot(slot);
+                bool isLeftSlot = (slot == EquipmentSlot.OffHand || slot == EquipmentSlot.LeftRing);
+                HumanBodyBones targetBone = attachment.ResolveTargetBone(slot, isLeftSlot);
 
                 Transform boneTransform = null;
                 if (_animator != null && _animator.isHuman && _animator.avatar != null)
@@ -303,7 +363,6 @@ namespace Neymanoff.HumanoidWardrobe
                 if (boneTransform != null)
                 {
                     spawnedInstance.transform.SetParent(boneTransform, false);
-                    bool isLeftSlot = (slot == EquipmentSlot.OffHand || slot == EquipmentSlot.LeftRing);
                     attachment.ApplyOffsets(isLeftSlot, _bodyScale, slot);
                     return true;
                 }
@@ -319,10 +378,32 @@ namespace Neymanoff.HumanoidWardrobe
         /// <summary>
         /// Unequips and destroys the item occupying the specified slot.
         /// If the item occupies multiple slots, all slots are cleared atomically.
+        /// If MainHand is cleared while a dual-hand weapon remains in OffHand, that weapon automatically shifts to MainHand.
         /// </summary>
         public bool Unequip(EquipmentSlot slot)
         {
-            return UnequipInternal(slot, suppressLoadoutEvent: false);
+            bool removed = UnequipInternal(slot, suppressLoadoutEvent: true);
+            if (!removed)
+            {
+                return false;
+            }
+
+            // If MainHand became empty while OffHand holds a dual-hand weapon (not a pure off-hand shield/scepter),
+            // promote the OffHand weapon to MainHand so a 1H weapon is never left alone in the off-hand.
+            if (!IsSlotOccupied(EquipmentSlot.MainHand) &&
+                _slotToInstance.TryGetValue(EquipmentSlot.OffHand, out var offHandInstance) &&
+                offHandInstance?.ItemData != null &&
+                offHandInstance.ItemData.IsDualHandCapable(allowDualTwoHanded))
+            {
+                WardrobeItemSO offHandWeapon = offHandInstance.ItemData;
+                UnequipInternal(EquipmentSlot.OffHand, suppressLoadoutEvent: true);
+                Equip(offHandWeapon, EquipmentSlot.MainHand);
+                return true;
+            }
+
+            UpdateBodyMasksAndBlendshapes();
+            OnLoadoutChanged?.Invoke(GetCurrentLoadout());
+            return true;
         }
 
         private bool UnequipInternal(EquipmentSlot slot, bool suppressLoadoutEvent)
@@ -450,9 +531,29 @@ namespace Neymanoff.HumanoidWardrobe
 
             UnequipAll();
 
+            // First pass: equip all slots except OffHand (ensures MainHand is occupied before OffHand dual-wielding)
             for (int i = 0; i < loadout.entries.Count; i++)
             {
                 EquippedSlotEntry entry = loadout.entries[i];
+                if (entry.slot == EquipmentSlot.OffHand) continue;
+
+                WardrobeItemSO item = itemResolver(entry.itemId);
+                if (item != null)
+                {
+                    Equip(item, entry.slot);
+                }
+                else
+                {
+                    Debug.LogWarning($"[WardrobeManager] Could not resolve item with ID '{entry.itemId}' for slot {entry.slot}.");
+                }
+            }
+
+            // Second pass: equip OffHand
+            for (int i = 0; i < loadout.entries.Count; i++)
+            {
+                EquippedSlotEntry entry = loadout.entries[i];
+                if (entry.slot != EquipmentSlot.OffHand) continue;
+
                 WardrobeItemSO item = itemResolver(entry.itemId);
                 if (item != null)
                 {

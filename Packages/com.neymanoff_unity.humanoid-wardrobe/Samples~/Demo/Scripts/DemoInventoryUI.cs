@@ -224,24 +224,38 @@ namespace Neymanoff.HumanoidWardrobe.UI
             }
             else
             {
-                SetFeedback($"Equipped {itemSO.ItemName} in {targetSlot}");
+                EquipmentSlot actualSlot = result.Instance != null ? result.Instance.PrimarySlot : targetSlot;
+                SetFeedback($"Equipped {itemSO.ItemName} in {actualSlot}");
             }
         }
 
         private EquipmentSlot ResolveBestSlotForItem(WardrobeItemSO itemSO)
         {
-            if (itemSO.AllowedSlots != null && itemSO.AllowedSlots.Count > 0)
+            bool allowDualTwoHanded = wardrobeManager != null && wardrobeManager.AllowDualTwoHanded;
+            IReadOnlyList<EquipmentSlot> allowed = itemSO.GetAllowedSlots(allowDualTwoHanded);
+            if (allowed != null && allowed.Count > 0)
             {
-                // Check if any allowed slot is currently open (supports dual-wielding)
-                for (int i = 0; i < itemSO.AllowedSlots.Count; i++)
+                // 1. Check if any allowed slot is currently open (supports dual-wielding)
+                for (int i = 0; i < allowed.Count; i++)
                 {
-                    EquipmentSlot candidate = itemSO.AllowedSlots[i];
+                    EquipmentSlot candidate = allowed[i];
                     if (wardrobeManager.GetEquippedItemData(candidate) == null)
                     {
                         return candidate;
                     }
                 }
-                return itemSO.AllowedSlots[0];
+
+                // 2. If all allowed slots are occupied, prefer an allowed slot that does not already hold this exact itemSO
+                for (int i = 0; i < allowed.Count; i++)
+                {
+                    EquipmentSlot candidate = allowed[i];
+                    if (wardrobeManager.GetEquippedItemData(candidate) != itemSO)
+                    {
+                        return candidate;
+                    }
+                }
+
+                return allowed[0];
             }
             return itemSO.TargetSlot;
         }
@@ -479,8 +493,9 @@ namespace Neymanoff.HumanoidWardrobe.UI
                 }
             }
 
+            bool allowDualTwoHanded = wardrobeManager.AllowDualTwoHanded;
             WardrobeItemSO mainHandSO = wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand);
-            if (mainHandSO != null && mainHandSO.Restriction == ItemSlotRestriction.TwoHanded)
+            if (mainHandSO != null && mainHandSO.IsTwoHandedWeapon && !allowDualTwoHanded)
             {
                 EquipmentSlotUI offHandUI = equipmentSlots.Find(s => s.SlotType == EquipmentSlot.OffHand);
                 if (offHandUI != null)
@@ -493,10 +508,21 @@ namespace Neymanoff.HumanoidWardrobe.UI
             {
                 WardrobeItemSO itemSO = pair.Key;
                 GameObject btnObj = pair.Value;
-                if (btnObj != null)
+                if (btnObj != null && itemSO != null)
                 {
-                    bool isEquipped = currentlyEquippedSO.Contains(itemSO);
-                    btnObj.SetActive(!isEquipped);
+                    bool shouldHide;
+                    if (itemSO.IsDualHandCapable(allowDualTwoHanded))
+                    {
+                        bool inMain = wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand) == itemSO;
+                        bool inOff = wardrobeManager.GetEquippedItemData(EquipmentSlot.OffHand) == itemSO;
+                        shouldHide = inMain && inOff;
+                    }
+                    else
+                    {
+                        shouldHide = currentlyEquippedSO.Contains(itemSO);
+                    }
+
+                    btnObj.SetActive(!shouldHide);
                 }
             }
         }

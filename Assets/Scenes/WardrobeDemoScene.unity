@@ -662,6 +662,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cf4977e5689ee1e4d9ae2f40aca75dd6, type: 2}
   - {fileID: 11400000, guid: b932c12632d63a14595149e984be037c, type: 2}
   - {fileID: 11400000, guid: 04c23b8bbcd6ee74fad4fe3a505c58ef, type: 2}
+  - {fileID: 11400000, guid: 5d237b2d76ad4af408565d6802efccc9, type: 2}
   inventoryGridContainer: {fileID: 1243793829}
   inventoryItemButtonPrefab: {fileID: 6450718736690836107, guid: dc8f9c795132dbc4aa60fe57fecc47b4, type: 3}
   equipmentSlots:
@@ -677,6 +678,16 @@ MonoBehaviour:
   - {fileID: 74677719}
   - {fileID: 1886553400}
   - {fileID: 995670663}
+  statusFeedbackText: {fileID: 0}
+  unequipAllButton: {fileID: 0}
+  savePresetButton: {fileID: 0}
+  loadPresetButton: {fileID: 0}
+  toggleHolsterButton: {fileID: 0}
+  toggleHolsterText: {fileID: 0}
+  availableProfiles: []
+  profileStandardButton: {fileID: 0}
+  profileDwarfButton: {fileID: 0}
+  profileGiantButton: {fileID: 0}
 --- !u!4 &367469731
 Transform:
   m_ObjectHideFlags: 0

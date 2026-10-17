@@ -242,5 +242,12 @@ Mobile/touch-first UI and interaction polish for demo and presentation layers:
 - [x] **11.4. Synchronization & Verification**:
   - [x] Synchronize scripts across `Assets/Scripts/Demo/` and `Samples~/Demo/Scripts/`.
   - [x] Verify clean compilation and 0 warnings (100% NUnit tests pass: 45/45).
+- [x] **11.5. Dual-Wielding Left-Hand Bone Binding, 1H/OffHand Slot Rules & Dual 2H Support (`[IMPLEMENTED]`)**:
+  - [x] Fix `Sword.prefab` (`useCustomBone: 0`) and `AxeSO.asset` (`allowedSlots: [MainHand, OffHand]`).
+  - [x] Add `ResolveTargetBone` with automatic right-to-left bone mirroring (`RightHand -> LeftHand`) in `HumanoidAttachmentPoint` when equipped in `OffHand`.
+  - [x] Enforce 1H weapon hand priority (`MainHand` first; `OffHand` allowed when `MainHand` holds a 1H weapon; pure `OffHandOnly` shields/scepters always allowed in `OffHand`).
+  - [x] Support equipping the same 1H weapon asset in both hands and swapping hands via `SwapSlots`.
+  - [x] Add `AllowDualTwoHanded` option on `WardrobeManager` for special classes to dual-wield 2H weapons.
+
 
 
