@@ -58,8 +58,17 @@ namespace Neymanoff.HumanoidWardrobe
         [SerializeField] private Vector3 localScale = Vector3.one;
 
         [Header("Mirroring Options")]
-        [Tooltip("Automatically mirror Position X and Rotation Y/Z when equipped in OffHand / Left slots.")]
+        [Tooltip("Automatically mirror Position X and weapon rotation (preserving forward blade +X and shaft +Z directions) when equipped in OffHand / Left slots.")]
         [SerializeField] private bool autoMirrorForLeftSlot = true;
+
+        [Tooltip("If enabled, uses explicit Left Local Position and Left Local Rotation below instead of automatic math mirroring when equipped in a left-side slot.")]
+        [SerializeField] private bool useLeftSlotOverride = false;
+
+        [Tooltip("Explicit local position offset when equipped in a left-side slot (only used if UseLeftSlotOverride is enabled).")]
+        [SerializeField] private Vector3 leftLocalPosition = Vector3.zero;
+
+        [Tooltip("Explicit local rotation offset (Euler angles) when equipped in a left-side slot (only used if UseLeftSlotOverride is enabled).")]
+        [SerializeField] private Vector3 leftLocalRotation = Vector3.zero;
 
         [Header("Profile Specific Overrides")]
         [Tooltip("Optional transform overrides tuned specifically for different body profiles (e.g. Dwarf, Orc).")]
@@ -90,6 +99,9 @@ namespace Neymanoff.HumanoidWardrobe
         public Vector3 LocalRotation => localRotation;
         public Vector3 LocalScale => localScale;
         public bool AutoMirrorForLeftSlot => autoMirrorForLeftSlot;
+        public bool UseLeftSlotOverride => useLeftSlotOverride;
+        public Vector3 LeftLocalPosition => leftLocalPosition;
+        public Vector3 LeftLocalRotation => leftLocalRotation;
         public IReadOnlyList<ProfileTransformOverride> ProfileOverrides => profileOverrides;
 
         public SocketAttachmentState CurrentSocketState { get; private set; } = SocketAttachmentState.Drawn;
@@ -112,7 +124,7 @@ namespace Neymanoff.HumanoidWardrobe
                 return WardrobeManager.GetDefaultBoneForSlot(slot);
             }
 
-            if (isLeftSlot && autoMirrorForLeftSlot)
+            if (isLeftSlot && (autoMirrorForLeftSlot || useLeftSlotOverride))
             {
                 return MirrorBoneToLeft(targetBone);
             }
@@ -162,8 +174,8 @@ namespace Neymanoff.HumanoidWardrobe
         /// <param name="slot">The equipment slot where this item is being attached.</param>
         public void ApplyOffsets(bool isLeftSlot = false, CharacterBodyScale bodyScale = null, EquipmentSlot slot = EquipmentSlot.MainHand)
         {
-            Vector3 pos = localPosition;
-            Vector3 rot = localRotation;
+            Vector3 pos = (isLeftSlot && useLeftSlotOverride) ? leftLocalPosition : localPosition;
+            Vector3 rot = (isLeftSlot && useLeftSlotOverride) ? leftLocalRotation : localRotation;
             Vector3 scale = localScale;
 
             // 1. Check if this attachment point has a bespoke override for the character's profile
@@ -196,17 +208,28 @@ namespace Neymanoff.HumanoidWardrobe
                 }
             }
 
-            // 4. Apply left-side mirroring
-            if (isLeftSlot && autoMirrorForLeftSlot)
+            // 4. Apply left-side mirroring when not using an explicit left-slot override
+            Quaternion finalRotation = Quaternion.Euler(rot);
+            if (isLeftSlot && !useLeftSlotOverride && autoMirrorForLeftSlot)
             {
                 pos.x = -pos.x;
-                rot.y = -rot.y;
-                rot.z = -rot.z;
+                finalRotation = MirrorRotationForLeftHand(finalRotation);
             }
 
             transform.localPosition = pos;
-            transform.localRotation = Quaternion.Euler(rot);
+            transform.localRotation = finalRotation;
             transform.localScale = scale;
+        }
+
+        /// <summary>
+        /// Mirrors a right-hand local rotation for a left-hand bone ($R_L = M_X \cdot R_R \cdot M_Y$),
+        /// ensuring both the weapon's longitudinal shaft (+Z) and its forward cutting edge/blade (+X)
+        /// point in the exact mirrored directions relative to the character.
+        /// </summary>
+        public static Quaternion MirrorRotationForLeftHand(Quaternion rightRotation)
+        {
+            Quaternion mirroredX = new Quaternion(rightRotation.x, -rightRotation.y, -rightRotation.z, rightRotation.w);
+            return mirroredX * Quaternion.Euler(0f, 0f, 180f);
         }
 
         /// <summary>

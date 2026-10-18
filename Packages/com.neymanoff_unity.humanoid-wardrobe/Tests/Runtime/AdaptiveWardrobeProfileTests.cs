@@ -97,23 +97,47 @@ namespace Neymanoff.HumanoidWardrobe.Tests
         }
 
         [Test]
-        public void HumanoidAttachmentPoint_LeftSlotMirroring_InvertsXAndYZRotations()
+        public void HumanoidAttachmentPoint_LeftSlotMirroring_InvertsPositionXAndPreservesForwardBladeDirection()
         {
-            var propObj = new GameObject("LeftShieldProp");
-            var attachment = propObj.AddComponent<HumanoidAttachmentPoint>();
-            attachment.ConfigureForTest(
-                new Vector3(0.3f, 0.1f, 0.2f),
-                new Vector3(10f, 20f, 30f),
+            var rightObj = new GameObject("RightAxeProp");
+            var rightAttachment = rightObj.AddComponent<HumanoidAttachmentPoint>();
+            var axeRot = new Vector3(-20f, -5f, 85f);
+            rightAttachment.ConfigureForTest(
+                new Vector3(0.02f, 0.1f, 0.02f),
+                axeRot,
                 Vector3.one,
                 autoMirror: true);
+            rightAttachment.ApplyOffsets(isLeftSlot: false, bodyScale: null, slot: EquipmentSlot.MainHand);
 
-            attachment.ApplyOffsets(isLeftSlot: true, bodyScale: null, slot: EquipmentSlot.OffHand);
+            var leftObj = new GameObject("LeftAxeProp");
+            var leftAttachment = leftObj.AddComponent<HumanoidAttachmentPoint>();
+            leftAttachment.ConfigureForTest(
+                new Vector3(0.02f, 0.1f, 0.02f),
+                axeRot,
+                Vector3.one,
+                autoMirror: true);
+            leftAttachment.ApplyOffsets(isLeftSlot: true, bodyScale: null, slot: EquipmentSlot.OffHand);
 
-            Assert.AreEqual(-0.3f, propObj.transform.localPosition.x, 0.001f);
-            Assert.AreEqual(0.1f, propObj.transform.localPosition.y, 0.001f);
-            Assert.AreEqual(0.2f, propObj.transform.localPosition.z, 0.001f);
+            Assert.AreEqual(-0.02f, leftObj.transform.localPosition.x, 0.001f);
+            Assert.AreEqual(0.1f, leftObj.transform.localPosition.y, 0.001f);
+            Assert.AreEqual(0.02f, leftObj.transform.localPosition.z, 0.001f);
 
-            Object.DestroyImmediate(propObj);
+            // In hand bone space (where LeftHand X is inverted relative to RightHand mirror),
+            // both the shaft (+Z) and forward cutting edge/blade (+X) must satisfy v_L = (-v_R.x, +v_R.y, +v_R.z)
+            Vector3 rightBlade = rightObj.transform.localRotation * Vector3.right;
+            Vector3 leftBlade = leftObj.transform.localRotation * Vector3.right;
+            Assert.AreEqual(-rightBlade.x, leftBlade.x, 0.001f);
+            Assert.AreEqual(rightBlade.y, leftBlade.y, 0.001f);
+            Assert.AreEqual(rightBlade.z, leftBlade.z, 0.001f);
+
+            Vector3 rightShaft = rightObj.transform.localRotation * Vector3.forward;
+            Vector3 leftShaft = leftObj.transform.localRotation * Vector3.forward;
+            Assert.AreEqual(-rightShaft.x, leftShaft.x, 0.001f);
+            Assert.AreEqual(rightShaft.y, leftShaft.y, 0.001f);
+            Assert.AreEqual(rightShaft.z, leftShaft.z, 0.001f);
+
+            Object.DestroyImmediate(rightObj);
+            Object.DestroyImmediate(leftObj);
         }
 
         [Test]
