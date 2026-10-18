@@ -191,16 +191,10 @@ namespace Neymanoff.HumanoidWardrobe.UI
                     iconImg.sprite = itemSO.Icon;
                 }
 
-                // Add mobile drag-and-drop capability
+                // Add mobile drag-and-drop capability (handles both drag and non-drag click)
                 var draggable = btnObj.AddComponent<DraggableItemUI>();
                 draggable.Initialize(itemSO);
                 draggable.OnItemClicked += EquipItem;
-
-                Button btn = btnObj.GetComponent<Button>();
-                if (btn != null)
-                {
-                    btn.onClick.AddListener(() => EquipItem(itemSO));
-                }
 
                 _itemButtonMap[itemSO] = btnObj;
             }
@@ -209,7 +203,7 @@ namespace Neymanoff.HumanoidWardrobe.UI
         /// <summary>
         /// Equips the specified WardrobeItemSO onto the character.
         /// If the item can fit in multiple slots (e.g. 1H weapon in MainHand or OffHand),
-        /// it prioritizes an open/empty slot before replacing an occupied one.
+        /// it prioritizes an open/empty slot before replacing the primary slot.
         /// </summary>
         public void EquipItem(WardrobeItemSO itemSO)
         {
@@ -235,26 +229,33 @@ namespace Neymanoff.HumanoidWardrobe.UI
             IReadOnlyList<EquipmentSlot> allowed = itemSO.GetAllowedSlots(allowDualTwoHanded);
             if (allowed != null && allowed.Count > 0)
             {
-                // 1. Check if any allowed slot is currently open (supports dual-wielding)
+                bool offHandBlockedByTwoHanded = false;
+                if (wardrobeManager != null && !allowDualTwoHanded)
+                {
+                    WardrobeItemSO mainHandItem = wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand);
+                    if (mainHandItem != null && mainHandItem.IsTwoHandedWeapon)
+                    {
+                        offHandBlockedByTwoHanded = true;
+                    }
+                }
+
+                // 1. Check if any allowed slot is currently open and not blocked by a 2H weapon
                 for (int i = 0; i < allowed.Count; i++)
                 {
                     EquipmentSlot candidate = allowed[i];
+                    if (candidate == EquipmentSlot.OffHand && offHandBlockedByTwoHanded)
+                    {
+                        continue;
+                    }
+
                     if (wardrobeManager.GetEquippedItemData(candidate) == null)
                     {
                         return candidate;
                     }
                 }
 
-                // 2. If all allowed slots are occupied, prefer an allowed slot that does not already hold this exact itemSO
-                for (int i = 0; i < allowed.Count; i++)
-                {
-                    EquipmentSlot candidate = allowed[i];
-                    if (wardrobeManager.GetEquippedItemData(candidate) != itemSO)
-                    {
-                        return candidate;
-                    }
-                }
-
+                // 2. If all allowed slots are occupied, replace the primary allowed slot (e.g. MainHand)
+                // so clicking a 1H weapon never knocks out a Shield in OffHand
                 return allowed[0];
             }
             return itemSO.TargetSlot;
@@ -456,8 +457,13 @@ namespace Neymanoff.HumanoidWardrobe.UI
         {
             if (wardrobeManager == null || eventData.pointerDrag == null) return;
 
-            if (eventData.pointerDrag.TryGetComponent<EquipmentSlotUI>(out var slotUI))
+            if (eventData.pointerDrag.TryGetComponent<DraggableItemUI>(out var draggable))
             {
+                draggable.ClearDragProxy();
+            }
+            else if (eventData.pointerDrag.TryGetComponent<EquipmentSlotUI>(out var slotUI))
+            {
+                slotUI.ClearDragProxy();
                 wardrobeManager.Unequip(slotUI.SlotType);
                 SetFeedback($"Unequipped {slotUI.SlotType}");
             }
@@ -504,25 +510,15 @@ namespace Neymanoff.HumanoidWardrobe.UI
                 }
             }
 
+            // 1 item = 1 slot: once an item from the inventory grid is equipped in any slot, hide its button
             foreach (var pair in _itemButtonMap)
             {
                 WardrobeItemSO itemSO = pair.Key;
                 GameObject btnObj = pair.Value;
                 if (btnObj != null && itemSO != null)
                 {
-                    bool shouldHide;
-                    if (itemSO.IsDualHandCapable(allowDualTwoHanded))
-                    {
-                        bool inMain = wardrobeManager.GetEquippedItemData(EquipmentSlot.MainHand) == itemSO;
-                        bool inOff = wardrobeManager.GetEquippedItemData(EquipmentSlot.OffHand) == itemSO;
-                        shouldHide = inMain && inOff;
-                    }
-                    else
-                    {
-                        shouldHide = currentlyEquippedSO.Contains(itemSO);
-                    }
-
-                    btnObj.SetActive(!shouldHide);
+                    bool isEquipped = currentlyEquippedSO.Contains(itemSO);
+                    btnObj.SetActive(!isEquipped);
                 }
             }
         }

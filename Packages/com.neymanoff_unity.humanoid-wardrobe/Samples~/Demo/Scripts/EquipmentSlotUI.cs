@@ -67,12 +67,27 @@ namespace Neymanoff.HumanoidWardrobe.UI
             ResetToSilhouette();
         }
 
+        private void OnDisable()
+        {
+            ClearDragProxy();
+        }
+
         private void OnDestroy()
         {
+            ClearDragProxy();
             if (_wardrobeManager != null)
             {
                 _wardrobeManager.OnEquipmentChanged -= HandleEquipmentChanged;
             }
+        }
+
+        /// <summary>
+        /// Immediately ends the active drag state and destroys the floating drag proxy icon.
+        /// </summary>
+        public void ClearDragProxy()
+        {
+            _isDragging = false;
+            DestroyDragProxy();
         }
 
         private void HandleEquipmentChanged(EquipmentSlot changedSlot, GameObject equippedObject)
@@ -182,12 +197,14 @@ namespace Neymanoff.HumanoidWardrobe.UI
             {
                 droppedItem = draggable.ItemData;
                 sourceSlot = draggable.SourceSlot;
+                draggable.ClearDragProxy();
             }
             // Or dragged from another equipment slot
             else if (eventData.pointerDrag.TryGetComponent<EquipmentSlotUI>(out var sourceSlotUI))
             {
                 droppedItem = sourceSlotUI.CurrentItem;
                 sourceSlot = sourceSlotUI.SlotType;
+                sourceSlotUI.ClearDragProxy();
             }
 
             if (droppedItem == null) return;
@@ -205,10 +222,8 @@ namespace Neymanoff.HumanoidWardrobe.UI
             {
                 if (sourceSlot.Value == slotType) return;
 
-                if (_wardrobeManager.SwapSlots(sourceSlot.Value, slotType))
-                {
-                    return;
-                }
+                _wardrobeManager.SwapSlots(sourceSlot.Value, slotType);
+                return;
             }
 
             // Dragged directly from inventory grid into this slot (Dual-Wielding support)
@@ -232,11 +247,11 @@ namespace Neymanoff.HumanoidWardrobe.UI
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            _isDragging = false;
-            DestroyDragProxy();
+            bool wasDragging = _isDragging;
+            ClearDragProxy();
 
             // If dragged outside any UI or dropped in the void, unequip
-            if (eventData.pointerEnter == null)
+            if (wasDragging && eventData.pointerEnter == null)
             {
                 _wardrobeManager.Unequip(slotType);
             }
@@ -250,6 +265,8 @@ namespace Neymanoff.HumanoidWardrobe.UI
 
         private void CreateDragProxy(PointerEventData eventData)
         {
+            DestroyDragProxy();
+
             if (_rootCanvas == null)
             {
                 _rootCanvas = GetComponentInParent<Canvas>();

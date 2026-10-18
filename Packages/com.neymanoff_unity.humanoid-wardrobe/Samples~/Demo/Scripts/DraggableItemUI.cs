@@ -69,6 +69,25 @@ namespace Neymanoff.HumanoidWardrobe.UI
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            ClearDragProxy();
+        }
+
+        private void OnDisable()
+        {
+            ClearDragProxy();
+        }
+
+        private void OnDestroy()
+        {
+            ClearDragProxy();
+        }
+
+        /// <summary>
+        /// Immediately ends the active drag state and destroys the floating drag proxy icon.
+        /// Essential when the source button is deactivated during OnDrop before OnEndDrag fires.
+        /// </summary>
+        public void ClearDragProxy()
+        {
             _isDragging = false;
             DestroyDragProxy();
         }
@@ -84,6 +103,8 @@ namespace Neymanoff.HumanoidWardrobe.UI
 
         private void CreateDragProxy(PointerEventData eventData)
         {
+            DestroyDragProxy();
+
             if (_rootCanvas == null)
             {
                 _rootCanvas = GetComponentInParent<Canvas>();
