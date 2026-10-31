@@ -248,6 +248,36 @@ Mobile/touch-first UI and interaction polish for demo and presentation layers:
   - [x] Enforce 1H weapon hand priority (`MainHand` first; `OffHand` allowed when `MainHand` holds a 1H weapon; pure `OffHandOnly` shields/scepters always allowed in `OffHand`).
   - [x] Support equipping the same 1H weapon asset in both hands and swapping hands via `SwapSlots`.
   - [x] Add `AllowDualTwoHanded` option on `WardrobeManager` for special classes to dual-wield 2H weapons.
+  - [x] Enforce 1-item-1-slot rule on inventory tap/click (`ResolveBestSlotForItem`) and hide equipped inventory buttons (`RefreshAllUI`).
+  - [x] Fix `DragProxy` ghost icon sticking on `OffHand` drop by clearing proxy inside `OnDrop` and `OnDisable`.
+  - [x] Mirror single-handed weapon rotation for `OffHand` (`MirrorRotationForLeftHand`) and support optional explicit left-hand overrides (`useLeftSlotOverride`).
+
+---
+
+## Phase 12: Optional Cosmetic Appearance System (Hair, Beard & Color Customization) (🛠️ [IMPLEMENTED])
+
+Optional, game-agnostic cosmetic appearance component inside `com.neymanoff_unity.humanoid-wardrobe` for independent Hairstyle, Beard, and Color customization without affecting standard `WardrobeManager` users:
+- [x] **12.1. Independent Hair & Beard Selection (`CosmeticCategory`, `CosmeticOptionSO`, `CosmeticCatalogSO`)**:
+  - [x] Support independent selection of `Hair` and `Beard` (including `"None"` / empty string) coexisting with each other and with `EquipmentSlot.Head` and `EquipmentSlot.FaceMask`.
+  - [x] Do not hijack `Head` or `FaceMask` slots and do not modify numerical values of existing `EquipmentSlot` enum entries (`0..16`).
+  - [x] Reuse existing attachment (`HumanoidAttachmentPoint`), bone remapping (`SkinnedMeshRemapper`), body scale profile prefab overrides (`CharacterBodyScale`), and blendshape morph synchronization.
+- [x] **12.2. Per-Instance Hair & Beard Color Customization (`MaterialPropertyBlock`)**:
+  - [x] Support linked (matching) or independent colors for Hair and Beard.
+  - [x] Configure target shader color property names (`_BaseColor`, `_Color`, etc.) and optional renderer/material slot indices in the Inspector.
+  - [x] Apply colors via `MaterialPropertyBlock` so recoloring one character never mutates shared project `Material` assets or other character instances.
+- [x] **12.3. Declarative Multi-Source Visibility Suppression (`CosmeticVisibilityMask`)**:
+  - [x] Add `[Flags] public enum CosmeticVisibilityMask` (`None`, `Hair`, `Beard`, `All`) and `hiddenCosmetics` field on `WardrobeItemSO`.
+  - [x] Support multiple simultaneous visibility suppression sources (equipped items via `WardrobeManager` + external visual outfits/adapters via named source keys).
+  - [x] Ensure hiding temporarily disables the visual hair/beard GameObject without resetting selected option IDs or colors, and removing one source only restores visibility when no remaining source suppresses that category.
+- [x] **12.4. Public Adapter Contract & Persistence DTO (`ICharacterAppearance`, `CharacterAppearanceData`)**:
+  - [x] Provide `ICharacterAppearance` and optional `CharacterAppearance` MonoBehaviour component.
+  - [x] Provide `CharacterAppearanceData` DTO (`hairOptionId`, `beardOptionId`, `hairColor`, `beardColor`, `linkColors`) with `ToJson` / `FromJson` and graceful, non-throwing handling of missing/unknown option IDs during restore.
+- [x] **12.5. Saved Stubs, Demo Showcase, NUnit Tests & Documentation**:
+  - [x] Create saved placeholder hair/beard prefabs (using Unity built-in primitive meshes and existing `Hair_Mat.mat`) and `CosmeticOptionSO` / `CosmeticCatalogSO` assets without adding external binary media to Git.
+  - [x] Wire optional appearance controls in `WardrobeDemoScene` / `DemoInventoryUI` via Inspector references.
+  - [x] Write comprehensive NUnit tests in `CharacterAppearanceTests.cs` covering selection, clearing, restore, missing IDs, color isolation across multiple characters, multi-source suppression, and equipment regression.
+  - [x] Update technical docs (`docs/ARCHITECTURE.md`, `docs/INTEGRATION_GUIDE.md`) and write Russian beginner's guide (`docs/COSMETIC_APPEARANCE_GUIDE_RU.md`).
+
 
 
 

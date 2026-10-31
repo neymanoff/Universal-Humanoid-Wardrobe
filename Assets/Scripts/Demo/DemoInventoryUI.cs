@@ -16,11 +16,16 @@ namespace Neymanoff.HumanoidWardrobe.UI
     public class DemoInventoryUI : MonoBehaviour, IDropHandler
     {
         private const string SaveKey = "WardrobeDemo_SavedLoadout";
+        private const string AppearanceSaveKey = "WardrobeDemo_SavedAppearance";
 
         [Header("Target Character")]
         [Tooltip("The character's WardrobeManager to equip items on.")]
         [SerializeField]
         private WardrobeManager wardrobeManager;
+
+        [Tooltip("Optional CharacterAppearance component on the character for hairstyle, beard, and color customization.")]
+        [SerializeField]
+        private CharacterAppearance characterAppearance;
 
         [Header("Available Items Database")]
         [Tooltip("List of item ScriptableObjects to display in the inventory grid.")]
@@ -84,7 +89,30 @@ namespace Neymanoff.HumanoidWardrobe.UI
         [SerializeField]
         private Button profileGiantButton;
 
+        [Header("Cosmetic Appearance Controls (Optional)")]
+        [Tooltip("Button to cycle through available hairstyles (including 'None').")]
+        [SerializeField]
+        private Button cycleHairButton;
+
+        [Tooltip("Button to cycle through available beards (including 'None').")]
+        [SerializeField]
+        private Button cycleBeardButton;
+
+        [Tooltip("Button to cycle through hair color presets from the cosmetic catalog.")]
+        [SerializeField]
+        private Button cycleHairColorButton;
+
+        [Tooltip("Button to cycle through beard color presets from the cosmetic catalog.")]
+        [SerializeField]
+        private Button cycleBeardColorButton;
+
+        [Tooltip("Optional Toggle to link/unlink hair and beard colors.")]
+        [SerializeField]
+        private Toggle linkColorsToggle;
+
         private readonly Dictionary<WardrobeItemSO, GameObject> _itemButtonMap = new();
+        private int _currentHairColorPresetIndex;
+        private int _currentBeardColorPresetIndex;
 
         private void Start()
         {
@@ -154,6 +182,11 @@ namespace Neymanoff.HumanoidWardrobe.UI
 
         private void InitMobileButtons()
         {
+            if (wardrobeManager != null && characterAppearance == null)
+            {
+                characterAppearance = wardrobeManager.GetComponent<CharacterAppearance>();
+            }
+
             if (unequipAllButton != null) unequipAllButton.onClick.AddListener(UnequipAll);
             if (savePresetButton != null) savePresetButton.onClick.AddListener(SaveCurrentLoadout);
             if (loadPresetButton != null) loadPresetButton.onClick.AddListener(LoadSavedLoadout);
@@ -162,6 +195,19 @@ namespace Neymanoff.HumanoidWardrobe.UI
             if (profileStandardButton != null) profileStandardButton.onClick.AddListener(() => SetProfileByIndex(0));
             if (profileDwarfButton != null) profileDwarfButton.onClick.AddListener(() => SetProfileByIndex(1));
             if (profileGiantButton != null) profileGiantButton.onClick.AddListener(() => SetProfileByIndex(2));
+
+            if (cycleHairButton != null) cycleHairButton.onClick.AddListener(CycleHairstyle);
+            if (cycleBeardButton != null) cycleBeardButton.onClick.AddListener(CycleBeard);
+            if (cycleHairColorButton != null) cycleHairColorButton.onClick.AddListener(CycleHairColor);
+            if (cycleBeardColorButton != null) cycleBeardColorButton.onClick.AddListener(CycleBeardColor);
+            if (linkColorsToggle != null)
+            {
+                if (characterAppearance != null)
+                {
+                    linkColorsToggle.SetIsOnWithoutNotify(characterAppearance.LinkHairAndBeardColor);
+                }
+                linkColorsToggle.onValueChanged.AddListener(SetLinkColors);
+            }
         }
 
         private void PopulateInventoryGrid()
@@ -385,7 +431,189 @@ namespace Neymanoff.HumanoidWardrobe.UI
         }
 
         /// <summary>
-        /// Saves the active loadout to PlayerPrefs in JSON format.
+        /// Cycles through available hairstyles in the character's <see cref="CosmeticCatalogSO"/>, including "None".
+        /// </summary>
+        public void CycleHairstyle()
+        {
+            if (characterAppearance == null && wardrobeManager != null)
+            {
+                characterAppearance = wardrobeManager.GetComponent<CharacterAppearance>();
+            }
+
+            if (characterAppearance == null || characterAppearance.Catalog == null)
+            {
+                SetFeedback("CharacterAppearance or CosmeticCatalogSO is not assigned.");
+                return;
+            }
+
+            IReadOnlyList<CosmeticOptionSO> options = characterAppearance.Catalog.HairOptions;
+            if (options == null || options.Count == 0)
+            {
+                characterAppearance.ClearHair();
+                SetFeedback("Hair: None");
+                return;
+            }
+
+            string currentId = characterAppearance.CurrentHairId;
+            if (string.IsNullOrEmpty(currentId))
+            {
+                characterAppearance.SetHair(options[0]);
+                SetFeedback($"Hair: {options[0].DisplayName}");
+                return;
+            }
+
+            for (int i = 0; i < options.Count; i++)
+            {
+                if (options[i] != null && string.Equals(options[i].OptionId, currentId, StringComparison.OrdinalIgnoreCase))
+                {
+                    int nextIndex = i + 1;
+                    if (nextIndex >= options.Count)
+                    {
+                        characterAppearance.ClearHair();
+                        SetFeedback("Hair: None");
+                    }
+                    else
+                    {
+                        characterAppearance.SetHair(options[nextIndex]);
+                        SetFeedback($"Hair: {options[nextIndex].DisplayName}");
+                    }
+                    return;
+                }
+            }
+
+            characterAppearance.SetHair(options[0]);
+            SetFeedback($"Hair: {options[0].DisplayName}");
+        }
+
+        /// <summary>
+        /// Cycles through available beards in the character's <see cref="CosmeticCatalogSO"/>, including "None".
+        /// </summary>
+        public void CycleBeard()
+        {
+            if (characterAppearance == null && wardrobeManager != null)
+            {
+                characterAppearance = wardrobeManager.GetComponent<CharacterAppearance>();
+            }
+
+            if (characterAppearance == null || characterAppearance.Catalog == null)
+            {
+                SetFeedback("CharacterAppearance or CosmeticCatalogSO is not assigned.");
+                return;
+            }
+
+            IReadOnlyList<CosmeticOptionSO> options = characterAppearance.Catalog.BeardOptions;
+            if (options == null || options.Count == 0)
+            {
+                characterAppearance.ClearBeard();
+                SetFeedback("Beard: None");
+                return;
+            }
+
+            string currentId = characterAppearance.CurrentBeardId;
+            if (string.IsNullOrEmpty(currentId))
+            {
+                characterAppearance.SetBeard(options[0]);
+                SetFeedback($"Beard: {options[0].DisplayName}");
+                return;
+            }
+
+            for (int i = 0; i < options.Count; i++)
+            {
+                if (options[i] != null && string.Equals(options[i].OptionId, currentId, StringComparison.OrdinalIgnoreCase))
+                {
+                    int nextIndex = i + 1;
+                    if (nextIndex >= options.Count)
+                    {
+                        characterAppearance.ClearBeard();
+                        SetFeedback("Beard: None");
+                    }
+                    else
+                    {
+                        characterAppearance.SetBeard(options[nextIndex]);
+                        SetFeedback($"Beard: {options[nextIndex].DisplayName}");
+                    }
+                    return;
+                }
+            }
+
+            characterAppearance.SetBeard(options[0]);
+            SetFeedback($"Beard: {options[0].DisplayName}");
+        }
+
+        /// <summary>
+        /// Cycles through hair color presets from the assigned <see cref="CosmeticCatalogSO"/>.
+        /// </summary>
+        public void CycleHairColor()
+        {
+            if (characterAppearance == null && wardrobeManager != null)
+            {
+                characterAppearance = wardrobeManager.GetComponent<CharacterAppearance>();
+            }
+
+            if (characterAppearance == null || characterAppearance.Catalog == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<CosmeticColorPreset> presets = characterAppearance.Catalog.ColorPresets;
+            if (presets == null || presets.Count == 0)
+            {
+                return;
+            }
+
+            _currentHairColorPresetIndex = (_currentHairColorPresetIndex + 1) % presets.Count;
+            CosmeticColorPreset preset = presets[_currentHairColorPresetIndex];
+            characterAppearance.SetHairColor(preset.color);
+            SetFeedback($"Hair Color: {preset.displayName}");
+        }
+
+        /// <summary>
+        /// Cycles through beard color presets from the assigned <see cref="CosmeticCatalogSO"/>.
+        /// Automatically unlinks hair and beard color if needed so independent beard tinting can be previewed.
+        /// </summary>
+        public void CycleBeardColor()
+        {
+            if (characterAppearance == null && wardrobeManager != null)
+            {
+                characterAppearance = wardrobeManager.GetComponent<CharacterAppearance>();
+            }
+
+            if (characterAppearance == null || characterAppearance.Catalog == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<CosmeticColorPreset> presets = characterAppearance.Catalog.ColorPresets;
+            if (presets == null || presets.Count == 0)
+            {
+                return;
+            }
+
+            _currentBeardColorPresetIndex = (_currentBeardColorPresetIndex + 1) % presets.Count;
+            CosmeticColorPreset preset = presets[_currentBeardColorPresetIndex];
+            characterAppearance.SetBeardColor(preset.color);
+            SetFeedback($"Beard Color: {preset.displayName}");
+        }
+
+        /// <summary>
+        /// Enables or disables linking between hair and beard colors.
+        /// </summary>
+        public void SetLinkColors(bool link)
+        {
+            if (characterAppearance == null && wardrobeManager != null)
+            {
+                characterAppearance = wardrobeManager.GetComponent<CharacterAppearance>();
+            }
+
+            if (characterAppearance != null)
+            {
+                characterAppearance.LinkHairAndBeardColor = link;
+                SetFeedback($"Link Hair & Beard Colors: {(link ? "ON" : "OFF")}");
+            }
+        }
+
+        /// <summary>
+        /// Saves the active loadout (and optional cosmetic appearance) to PlayerPrefs in JSON format.
         /// </summary>
         public void SaveCurrentLoadout()
         {
@@ -394,6 +622,13 @@ namespace Neymanoff.HumanoidWardrobe.UI
             WardrobeLoadout loadout = wardrobeManager.GetCurrentLoadout();
             string json = loadout.ToJson(prettyPrint: true);
             PlayerPrefs.SetString(SaveKey, json);
+
+            if (characterAppearance != null)
+            {
+                CharacterAppearanceData appearanceData = characterAppearance.GetAppearanceData();
+                PlayerPrefs.SetString(AppearanceSaveKey, appearanceData.ToJson(prettyPrint: true));
+            }
+
             PlayerPrefs.Save();
 
             Debug.Log($"[DemoInventoryUI] Preset saved ({loadout.entries.Count} items):\n{json}");
@@ -401,7 +636,7 @@ namespace Neymanoff.HumanoidWardrobe.UI
         }
 
         /// <summary>
-        /// Restores a previously saved loadout from PlayerPrefs.
+        /// Restores a previously saved loadout (and optional cosmetic appearance) from PlayerPrefs.
         /// </summary>
         public void LoadSavedLoadout()
         {
@@ -417,6 +652,13 @@ namespace Neymanoff.HumanoidWardrobe.UI
             string json = PlayerPrefs.GetString(SaveKey);
             WardrobeLoadout loadout = WardrobeLoadout.FromJson(json);
             wardrobeManager.ApplyLoadout(loadout, FindItemById);
+
+            if (characterAppearance != null && PlayerPrefs.HasKey(AppearanceSaveKey))
+            {
+                string appearanceJson = PlayerPrefs.GetString(AppearanceSaveKey);
+                CharacterAppearanceData appearanceData = CharacterAppearanceData.FromJson(appearanceJson);
+                characterAppearance.ApplyAppearanceData(appearanceData);
+            }
 
             Debug.Log($"[DemoInventoryUI] Preset restored ({loadout.entries.Count} items).");
             SetFeedback($"Preset Restored ({loadout.entries.Count} items)");

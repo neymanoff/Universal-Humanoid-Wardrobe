@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c39f8a124e6b4a72849c2f64d8b75e33, type: 3}
+  m_Name: DefaultCosmeticCatalogSO
+  m_EditorClassIdentifier: Neymanoff.HumanoidWardrobe::Neymanoff.HumanoidWardrobe.CosmeticCatalogSO
+  hairOptions:
+  - {fileID: 11400000, guid: 82b20000111144448888111122223301, type: 2}
+  - {fileID: 11400000, guid: 82b20000111144448888111122223302, type: 2}
+  beardOptions:
+  - {fileID: 11400000, guid: 82b20000111144448888111122223303, type: 2}
+  - {fileID: 11400000, guid: 82b20000111144448888111122223304, type: 2}
+  colorPresets:
+  - presetId: dark_brown
+    displayName: Dark Brown
+    color: {r: 0.24, g: 0.15, b: 0.09, a: 1}
+  - presetId: raven_black
+    displayName: Raven Black
+    color: {r: 0.08, g: 0.08, b: 0.1, a: 1}
+  - presetId: golden_blonde
+    displayName: Golden Blonde
+    color: {r: 0.85, g: 0.72, b: 0.38, a: 1}
+  - presetId: copper_red
+    displayName: Copper Red
+    color: {r: 0.65, g: 0.24, b: 0.12, a: 1}
+  - presetId: silver_grey
+    displayName: Silver Grey
+    color: {r: 0.75, g: 0.77, b: 0.8, a: 1}

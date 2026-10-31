@@ -263,8 +263,23 @@ sequenceDiagram
 
 ---
 
-## 6. Future Expansion Points (Roadmap Alignment)
+## 6. Optional Cosmetic Appearance Subsystem (`CharacterAppearance`)
 
-1. **`WardrobeRigProfile`**: ScriptableObject mapping per-rig socket offsets (e.g. Orc vs Dwarf vs Elf), custom bone aliases, and bounds presets.
-2. **Body Coverage & Mesh Clipping (`HideBodyParts`)**: Declarative flags on `WardrobeItemSO` (e.g. `HideTorso`, `HideLegs`) to toggle sub-mesh visibility or swap body geometry to prevent skin poke-through.
-3. **Rig Remap Profile**: Explicit bone-to-bone alias mapping to handle non-standard twist/helper bones across different modeling DCCs.
+To support characters with customizable hairstyles, beards, and hair/beard colors without polluting core equipment slots (`EquipmentSlot.Head` or `EquipmentSlot.FaceMask`) or forcing standard `WardrobeManager` users to configure cosmetics, the package provides an optional, game-agnostic appearance layer:
+
+* **`ICharacterAppearance` & `CharacterAppearance`**:
+  * Optional `MonoBehaviour` component that can operate standalone on any humanoid `Animator` or alongside `WardrobeManager` and `CharacterBodyScale`.
+  * Manages `CosmeticCategory.Hair` and `CosmeticCategory.Beard` independently (including `"None"` / empty string), coexisting with `EquipmentSlot.Head` and `EquipmentSlot.FaceMask`.
+* **`CosmeticOptionSO` & `CosmeticCatalogSO`**:
+  * Inspector-authored catalog entries holding a stable `optionId`, `category`, `prefab`, `defaultAttachmentBone` (`HumanBodyBones.Head`), `profilePrefabOverrides`, and material tinting filters (`colorShaderProperties`, `targetMaterialIndices`, `targetRendererNames`).
+  * Reuses `SkinnedMeshRemapper`, `HumanoidAttachmentPoint`, `CharacterBodyScale` profile overrides, and blendshape morph synchronization.
+* **Per-Instance Color Isolation (`MaterialPropertyBlock`)**:
+  * Supports linked (matching) or independent colors for hair and beard.
+  * Tints target renderers and material indices exclusively via `Renderer.GetPropertyBlock` / `Renderer.SetPropertyBlock`, guaranteeing that recoloring one character never mutates shared project `Material` assets or other character instances.
+* **Declarative Multi-Source Visibility Suppression (`CosmeticVisibilityMask`)**:
+  * Equipped `WardrobeItemSO` assets declare `hiddenCosmetics` (`None`, `Hair`, `Beard`, `All`), automatically registered under internal source key `__WardrobeEquipment__`.
+  * External game/class outfit adapters can register additional named suppression sources via `SetVisibilityRestriction(sourceId, mask)` and `RemoveVisibilityRestriction(sourceId)`.
+  * A cosmetic category remains hidden (`SetActive(false)`) while **any** active source suppresses it, without resetting the selected `optionId` or colors. When all suppressing sources are removed, the cosmetic immediately reappears with its selected model and color.
+* **Persistence DTO (`CharacterAppearanceData`)**:
+  * Pure data structure (`hairOptionId`, `beardOptionId`, `hairColor`, `beardColor`, `linkColors`) with `ToJson()` / `FromJson()`.
+  * Missing or unknown `optionId` values during `ApplyAppearanceData` are handled gracefully (falling back to `"None"` for the missing category and reporting via `AppearanceApplyResult` without throwing exceptions or corrupting remaining fields).

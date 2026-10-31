@@ -78,6 +78,10 @@ namespace Neymanoff.HumanoidWardrobe
         [Tooltip("Blendshape names on the base character body to set to 100% weight to tuck/shrink skin under this clothing item.")]
         [SerializeField] private List<string> shrinkBlendShapes = new();
 
+        [Header("Cosmetic Compatibility")]
+        [Tooltip("Cosmetic appearance categories (Hair, Beard) that should be temporarily hidden while this item is equipped.")]
+        [SerializeField] private CosmeticVisibilityMask hiddenCosmetics = CosmeticVisibilityMask.None;
+
         public IReadOnlyList<ProfilePrefabOverride> ProfilePrefabOverrides => profilePrefabOverrides;
 
         /// <summary>
@@ -193,6 +197,7 @@ namespace Neymanoff.HumanoidWardrobe
         public IReadOnlyList<EquipmentSlot> AdditionalOccupiedSlots => additionalOccupiedSlots;
         public BodyPartMask HiddenBodyParts => hiddenBodyParts;
         public IReadOnlyList<string> ShrinkBlendShapes => shrinkBlendShapes;
+        public CosmeticVisibilityMask HiddenCosmetics => hiddenCosmetics;
 
         private void OnValidate()
         {
@@ -303,7 +308,8 @@ namespace Neymanoff.HumanoidWardrobe
             IEnumerable<EquipmentSlot> additional = null,
             BodyPartMask hiddenParts = BodyPartMask.None,
             IEnumerable<string> shrinkShapes = null,
-            IEnumerable<ProfilePrefabOverride> prefabOverrides = null)
+            IEnumerable<ProfilePrefabOverride> prefabOverrides = null,
+            CosmeticVisibilityMask hiddenCosmeticMask = CosmeticVisibilityMask.None)
         {
             this.itemId = id;
             this.itemName = name;
@@ -313,6 +319,7 @@ namespace Neymanoff.HumanoidWardrobe
             this.hiddenBodyParts = hiddenParts;
             this.shrinkBlendShapes = shrinkShapes != null ? new List<string>(shrinkShapes) : new List<string>();
             this.profilePrefabOverrides = prefabOverrides != null ? new List<ProfilePrefabOverride>(prefabOverrides) : new List<ProfilePrefabOverride>();
+            this.hiddenCosmetics = hiddenCosmeticMask;
         }
 #endif
     }

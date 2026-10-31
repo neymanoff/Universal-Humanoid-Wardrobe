@@ -192,3 +192,32 @@ Inspect character outfits directly in the Scene view:
 2. In the `WardrobeManager` inspector, configure the **Default Loadout**.
 3. Click **Preview Default Loadout** to instantiate preview objects.
 4. Click **Clear Preview** to cleanly remove instances without scene hierarchy leaks.
+
+---
+
+## 6. Optional Cosmetic Appearance Integration (`ICharacterAppearance`)
+
+If your character supports customizable Hairstyle, Beard, and Colors:
+
+1. Attach `CharacterAppearance` to the character GameObject (alongside `Animator` and optionally `WardrobeManager`).
+2. Assign a `CosmeticCatalogSO` containing your `CosmeticOptionSO` assets for Hair and Beard.
+3. Use `ICharacterAppearance` from your game adapter to apply selections, control visibility restrictions (e.g., when a class outfit or full helmet is active), and save/restore `CharacterAppearanceData`:
+
+```csharp
+// Apply hairstyle, beard, and colors via ICharacterAppearance
+ICharacterAppearance appearance = character.GetComponent<ICharacterAppearance>();
+appearance.SetHair("hair_short");
+appearance.SetBeard("beard_full");
+appearance.SetColors(hairColor, beardColor, linkColors: true);
+
+// External class outfit / visual set temporarily hiding hair:
+appearance.SetVisibilityRestriction("ClassOutfit_ClosedHelm", CosmeticVisibilityMask.Hair);
+
+// Later, when the outfit restriction is removed:
+appearance.RemoveVisibilityRestriction("ClassOutfit_ClosedHelm");
+
+// Save & Restore DTO:
+string json = appearance.GetAppearanceData().ToJson();
+CharacterAppearanceData restored = CharacterAppearanceData.FromJson(json);
+AppearanceApplyResult result = appearance.ApplyAppearanceData(restored);
+```
