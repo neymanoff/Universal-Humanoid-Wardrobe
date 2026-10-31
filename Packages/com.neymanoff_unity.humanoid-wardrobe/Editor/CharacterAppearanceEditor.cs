@@ -72,6 +72,13 @@ namespace Neymanoff.HumanoidWardrobe.Editor
                     _appearance.ClearAllCosmetics();
                     EditorUtility.SetDirty(_appearance);
                 }
+
+                string helmetBtnLabel = _appearance.HideHelmetVisual ? "Show Helmet Visual" : "Hide Helmet Visual";
+                if (GUILayout.Button(helmetBtnLabel, GUILayout.Height(26)))
+                {
+                    _appearance.ToggleHelmetVisual();
+                    EditorUtility.SetDirty(_appearance);
+                }
             }
         }
 

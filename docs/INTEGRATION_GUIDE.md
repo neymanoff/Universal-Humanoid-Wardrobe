@@ -220,4 +220,8 @@ appearance.RemoveVisibilityRestriction("ClassOutfit_ClosedHelm");
 string json = appearance.GetAppearanceData().ToJson();
 CharacterAppearanceData restored = CharacterAppearanceData.FromJson(json);
 AppearanceApplyResult result = appearance.ApplyAppearanceData(restored);
+
+// Show / Hide Helmet Visual while keeping Helmet Equipped in EquipmentSlot.Head:
+appearance.SetHelmetVisualHidden(true);  // Hides 3D helmet mesh and reveals head, hair, and beard
+appearance.ToggleHelmetVisual();         // Toggles helmet visual display on/off
 ```

@@ -65,6 +65,10 @@ namespace Neymanoff.HumanoidWardrobe
         [SerializeField]
         private List<string> targetRendererNames = new();
 
+        [Tooltip("When enabled, clears _BaseMap and _MainTex on the per-character runtime material clone so solid color tinting is not darkened by an existing texture (useful for untextured stub meshes sharing a dark material).")]
+        [SerializeField]
+        private bool clearBaseTextureOnTint = false;
+
         /// <summary>
         /// Stable persistence identifier for this cosmetic option.
         /// </summary>
@@ -123,6 +127,11 @@ namespace Neymanoff.HumanoidWardrobe
         /// Optional Renderer GameObject names to tint. Empty means all child renderers.
         /// </summary>
         public IReadOnlyList<string> TargetRendererNames => targetRendererNames;
+
+        /// <summary>
+        /// When true, clears <c>_BaseMap</c> and <c>_MainTex</c> on the per-instance runtime material clone before tinting.
+        /// </summary>
+        public bool ClearBaseTextureOnTint => clearBaseTextureOnTint;
 
         /// <summary>
         /// Resolves the prefab to instantiate for a given character body profile ID.

@@ -25,3 +25,4 @@ MonoBehaviour:
   - _Color
   targetMaterialIndices: []
   targetRendererNames: []
+  clearBaseTextureOnTint: 1

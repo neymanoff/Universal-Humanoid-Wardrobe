@@ -22,15 +22,15 @@ MonoBehaviour:
   - presetId: dark_brown
     displayName: Dark Brown
     color: {r: 0.24, g: 0.15, b: 0.09, a: 1}
+  - presetId: golden_blonde
+    displayName: Golden Blonde
+    color: {r: 0.88, g: 0.74, b: 0.32, a: 1}
+  - presetId: copper_red
+    displayName: Copper Red
+    color: {r: 0.72, g: 0.22, b: 0.1, a: 1}
+  - presetId: silver_grey
+    displayName: Silver Grey
+    color: {r: 0.8, g: 0.82, b: 0.86, a: 1}
   - presetId: raven_black
     displayName: Raven Black
     color: {r: 0.08, g: 0.08, b: 0.1, a: 1}
-  - presetId: golden_blonde
-    displayName: Golden Blonde
-    color: {r: 0.85, g: 0.72, b: 0.38, a: 1}
-  - presetId: copper_red
-    displayName: Copper Red
-    color: {r: 0.65, g: 0.24, b: 0.12, a: 1}
-  - presetId: silver_grey
-    displayName: Silver Grey
-    color: {r: 0.75, g: 0.77, b: 0.8, a: 1}

@@ -70,10 +70,13 @@ namespace Neymanoff.HumanoidWardrobe
         private readonly Dictionary<string, CosmeticVisibilityMask> _visibilityRestrictions =
             new(StringComparer.Ordinal);
 
+        private readonly Dictionary<Renderer, Material[]> _rendererRuntimeMaterials = new();
+
         private MaterialPropertyBlock _propertyBlock;
         private bool _initializedReferences;
         private bool _subscribedToWardrobe;
         private bool _appearanceModifiedBeforeStart;
+        private bool _localHideHelmetVisual;
 
         /// <summary>
         /// Assigned cosmetic option catalog.
@@ -139,6 +142,32 @@ namespace Neymanoff.HumanoidWardrobe
 
         /// <inheritdoc />
         public CosmeticVisibilityMask ActiveVisibilityRestrictions { get; private set; } = CosmeticVisibilityMask.None;
+
+        /// <inheritdoc />
+        public bool HideHelmetVisual
+        {
+            get => wardrobeManager != null ? wardrobeManager.HideHelmetVisual : _localHideHelmetVisual;
+            set => SetHelmetVisualHidden(value);
+        }
+
+        /// <inheritdoc />
+        public void SetHelmetVisualHidden(bool hidden)
+        {
+            EnsureInitialized();
+            _localHideHelmetVisual = hidden;
+            if (wardrobeManager != null)
+            {
+                wardrobeManager.SetHelmetVisualHidden(hidden);
+            }
+            SyncEquipmentVisibilityRestrictions();
+        }
+
+        /// <inheritdoc />
+        public bool ToggleHelmetVisual()
+        {
+            SetHelmetVisualHidden(!HideHelmetVisual);
+            return HideHelmetVisual;
+        }
 
         /// <inheritdoc />
         public event Action<CosmeticCategory, CosmeticOptionSO, GameObject> OnCosmeticChanged;
@@ -210,6 +239,7 @@ namespace Neymanoff.HumanoidWardrobe
         private void OnDestroy()
         {
             UnsubscribeFromWardrobe();
+            CleanupAllRuntimeMaterials();
         }
 
         /// <summary>
@@ -841,15 +871,22 @@ namespace Neymanoff.HumanoidWardrobe
                     continue;
                 }
 
+                Material[] runtimeMats = EnsureRuntimeMaterialsForRenderer(rend);
+                int matCount = runtimeMats != null ? runtimeMats.Length : 0;
+
                 if (filterMaterialIndices)
                 {
-                    int sharedMatCount = rend.sharedMaterials != null ? rend.sharedMaterials.Length : 0;
                     for (int i = 0; i < matIndices.Count; i++)
                     {
                         int matIndex = matIndices[i];
-                        if (matIndex < 0 || (sharedMatCount > 0 && matIndex >= sharedMatCount))
+                        if (matIndex < 0 || (matCount > 0 && matIndex >= matCount))
                         {
                             continue;
+                        }
+
+                        if (runtimeMats != null && matIndex < runtimeMats.Length && runtimeMats[matIndex] != null)
+                        {
+                            SetMaterialColorProperties(runtimeMats[matIndex], shaderProps, color, option.ClearBaseTextureOnTint);
                         }
 
                         rend.GetPropertyBlock(_propertyBlock, matIndex);
@@ -867,6 +904,17 @@ namespace Neymanoff.HumanoidWardrobe
                 }
                 else
                 {
+                    if (runtimeMats != null)
+                    {
+                        for (int m = 0; m < runtimeMats.Length; m++)
+                        {
+                            if (runtimeMats[m] != null)
+                            {
+                                SetMaterialColorProperties(runtimeMats[m], shaderProps, color, option.ClearBaseTextureOnTint);
+                            }
+                        }
+                    }
+
                     rend.GetPropertyBlock(_propertyBlock);
                     for (int p = 0; p < shaderProps.Count; p++)
                     {
@@ -882,6 +930,74 @@ namespace Neymanoff.HumanoidWardrobe
             }
         }
 
+        private Material[] EnsureRuntimeMaterialsForRenderer(Renderer rend)
+        {
+            if (rend == null)
+            {
+                return null;
+            }
+
+            if (_rendererRuntimeMaterials.TryGetValue(rend, out Material[] existing) && existing != null)
+            {
+                return existing;
+            }
+
+            Material[] shared = rend.sharedMaterials;
+            if (shared == null || shared.Length == 0)
+            {
+                return null;
+            }
+
+            Material[] cloned = new Material[shared.Length];
+            for (int i = 0; i < shared.Length; i++)
+            {
+                if (shared[i] != null)
+                {
+                    cloned[i] = new Material(shared[i])
+                    {
+                        name = $"{shared[i].name}_Instance"
+                    };
+                }
+            }
+
+            rend.sharedMaterials = cloned;
+            _rendererRuntimeMaterials[rend] = cloned;
+            return cloned;
+        }
+
+        private static void SetMaterialColorProperties(
+            Material mat,
+            IReadOnlyList<string> shaderProps,
+            Color color,
+            bool clearBaseTexture)
+        {
+            if (mat == null || shaderProps == null)
+            {
+                return;
+            }
+
+            if (clearBaseTexture)
+            {
+                if (mat.HasProperty("_BaseMap"))
+                {
+                    mat.SetTexture("_BaseMap", null);
+                }
+                if (mat.HasProperty("_MainTex"))
+                {
+                    mat.SetTexture("_MainTex", null);
+                }
+            }
+
+            for (int p = 0; p < shaderProps.Count; p++)
+            {
+                string propName = shaderProps[p];
+                if (!string.IsNullOrEmpty(propName) && mat.HasProperty(propName))
+                {
+                    mat.SetColor(propName, color);
+                }
+            }
+        }
+
         /// <summary>
         /// Synchronizes the internal equipment visibility restriction source from all items
         /// currently equipped on <see cref="WardrobeManager"/>.
@@ -892,14 +1008,22 @@ namespace Neymanoff.HumanoidWardrobe
 
             if (wardrobeManager != null && wardrobeManager.EquippedInstances != null)
             {
+                bool bypassHelmet = wardrobeManager.HideHelmetVisual;
                 IReadOnlyList<EquippedItemInstance> instances = wardrobeManager.EquippedInstances;
                 for (int i = 0; i < instances.Count; i++)
                 {
-                    WardrobeItemSO itemSO = instances[i]?.ItemData;
-                    if (itemSO != null)
+                    EquippedItemInstance inst = instances[i];
+                    if (inst?.ItemData == null)
                     {
-                        combinedEquipmentMask |= itemSO.HiddenCosmetics;
+                        continue;
                     }
+
+                    if (bypassHelmet && inst.PrimarySlot == EquipmentSlot.Head)
+                    {
+                        continue;
+                    }
+
+                    combinedEquipmentMask |= inst.ItemData.HiddenCosmetics;
                 }
             }
 
@@ -999,6 +1123,7 @@ namespace Neymanoff.HumanoidWardrobe
 
             wardrobeManager.OnEquipmentChanged += HandleWardrobeEquipmentChanged;
             wardrobeManager.OnLoadoutChanged += HandleWardrobeLoadoutChanged;
+            wardrobeManager.OnHelmetVisibilityChanged += HandleWardrobeHelmetVisibilityChanged;
             _subscribedToWardrobe = true;
         }
 
@@ -1012,6 +1137,7 @@ namespace Neymanoff.HumanoidWardrobe
 
             wardrobeManager.OnEquipmentChanged -= HandleWardrobeEquipmentChanged;
             wardrobeManager.OnLoadoutChanged -= HandleWardrobeLoadoutChanged;
+            wardrobeManager.OnHelmetVisibilityChanged -= HandleWardrobeHelmetVisibilityChanged;
             _subscribedToWardrobe = false;
         }
 
@@ -1025,12 +1151,19 @@ namespace Neymanoff.HumanoidWardrobe
             SyncEquipmentVisibilityRestrictions();
         }
 
-        private static void DestroyInstance(GameObject obj)
+        private void HandleWardrobeHelmetVisibilityChanged(bool hidden)
+        {
+            SyncEquipmentVisibilityRestrictions();
+        }
+
+        private void DestroyInstance(GameObject obj)
         {
             if (obj == null)
             {
                 return;
             }
+
+            CleanupRuntimeMaterialsForInstance(obj);
 
             if (Application.isPlaying)
             {
@@ -1039,6 +1172,65 @@ namespace Neymanoff.HumanoidWardrobe
             else
             {
                 DestroyImmediate(obj);
+            }
+        }
+
+        private void CleanupRuntimeMaterialsForInstance(GameObject obj)
+        {
+            if (obj == null || _rendererRuntimeMaterials.Count == 0)
+            {
+                return;
+            }
+
+            Renderer[] renderers = obj.GetComponentsInChildren<Renderer>(true);
+            for (int r = 0; r < renderers.Length; r++)
+            {
+                Renderer rend = renderers[r];
+                if (rend != null && _rendererRuntimeMaterials.TryGetValue(rend, out Material[] mats))
+                {
+                    _rendererRuntimeMaterials.Remove(rend);
+                    DestroyMaterialArray(mats);
+                }
+            }
+        }
+
+        private void CleanupAllRuntimeMaterials()
+        {
+            if (_rendererRuntimeMaterials.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var pair in _rendererRuntimeMaterials)
+            {
+                DestroyMaterialArray(pair.Value);
+            }
+
+            _rendererRuntimeMaterials.Clear();
+        }
+
+        private static void DestroyMaterialArray(Material[] mats)
+        {
+            if (mats == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < mats.Length; i++)
+            {
+                if (mats[i] == null)
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(mats[i]);
+                }
+                else
+                {
+                    DestroyImmediate(mats[i]);
+                }
             }
         }
     }

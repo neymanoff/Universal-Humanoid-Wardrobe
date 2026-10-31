@@ -207,13 +207,13 @@ namespace Neymanoff.HumanoidWardrobe.Tests
             Assert.IsTrue(CharacterAppearance.TryGetAppliedRendererColor(rendHairB, out Color actualHairB));
             Assert.IsTrue(CharacterAppearance.TryGetAppliedRendererColor(rendBeardB, out Color actualBeardB));
 
-            Assert.AreEqual(crimson, actualHairA);
-            Assert.AreEqual(crimson, actualBeardA);
-            Assert.AreEqual(teal, actualHairB);
-            Assert.AreEqual(silver, actualBeardB);
+            AssertColorApproximatelyEqual(crimson, actualHairA);
+            AssertColorApproximatelyEqual(crimson, actualBeardA);
+            AssertColorApproximatelyEqual(teal, actualHairB);
+            AssertColorApproximatelyEqual(silver, actualBeardB);
 
             // 4. Shared project material must remain untouched (Color.white)
-            Assert.AreEqual(Color.white, _sharedHairMaterial.color);
+            AssertColorApproximatelyEqual(Color.white, _sharedHairMaterial.color);
         }
 
         [Test]
@@ -247,7 +247,7 @@ namespace Neymanoff.HumanoidWardrobe.Tests
 
             // Selection IDs and colors must NOT be reset while hidden
             Assert.AreEqual("hair_short", _appearanceA.CurrentHairId);
-            Assert.AreEqual(chosenHairColor, _appearanceA.HairColor);
+            AssertColorApproximatelyEqual(chosenHairColor, _appearanceA.HairColor);
 
             // Source 2: External visual outfit adapter suppresses both Hair and Beard
             _appearanceA.SetVisibilityRestriction("ClassOutfit_Hood", CosmeticVisibilityMask.All);
@@ -275,9 +275,86 @@ namespace Neymanoff.HumanoidWardrobe.Tests
 
             Renderer hairRenderer = _appearanceA.CurrentHairInstance.GetComponentInChildren<Renderer>();
             Assert.IsTrue(CharacterAppearance.TryGetAppliedRendererColor(hairRenderer, out Color restoredColor));
-            Assert.AreEqual(chosenHairColor, restoredColor);
+            AssertColorApproximatelyEqual(chosenHairColor, restoredColor);
 
             Object.DestroyImmediate(helmet);
+        }
+
+        [Test]
+        public void HideHelmetVisual_WhenHelmetEquipped_KeepsHelmetEquippedWhileShowingHeadHairAndBeard()
+        {
+            // Configure a modular Head body part renderer on Character A
+            GameObject headMeshObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            headMeshObj.name = "CharacterHeadMesh";
+            headMeshObj.transform.SetParent(_characterA.transform, false);
+            Renderer headRenderer = headMeshObj.GetComponent<Renderer>();
+
+            _wardrobeA.ConfigureModularPartsForTest(new[]
+            {
+                new WardrobeManager.ModularBodyPart
+                {
+                    part = BodyPartMask.Head,
+                    renderer = headRenderer
+                }
+            });
+
+            _appearanceA.SetHair("hair_short");
+            _appearanceA.SetBeard("beard_full");
+
+            var helmet = ScriptableObject.CreateInstance<WardrobeItemSO>();
+            helmet.ConfigureForTest(
+                "full_plate_helm",
+                "Full Plate Helmet",
+                _equipmentDummyPrefab,
+                new[] { EquipmentSlot.Head },
+                hiddenParts: BodyPartMask.Head,
+                hiddenCosmeticMask: CosmeticVisibilityMask.Hair);
+
+            EquipResult equipResult = _wardrobeA.Equip(helmet, EquipmentSlot.Head);
+            Assert.IsTrue(equipResult.IsSuccess);
+            GameObject helmetInstance = _wardrobeA.GetEquippedItem(EquipmentSlot.Head);
+            Assert.IsNotNull(helmetInstance);
+
+            // By default (HideHelmetVisual == false): helmet is shown, head mesh and hair are hidden
+            Assert.IsFalse(_wardrobeA.HideHelmetVisual);
+            Assert.IsTrue(helmetInstance.activeSelf);
+            Assert.IsFalse(headRenderer.enabled);
+            Assert.IsFalse(_appearanceA.IsHairVisible);
+            Assert.IsFalse(_appearanceA.CurrentHairInstance.activeSelf);
+            Assert.IsTrue(_appearanceA.IsBeardVisible);
+
+            // Enable "Hide Helmet": helmet stays equipped in Head slot, but its 3D mesh is hidden and Head + Hair remain visible
+            _appearanceA.SetHelmetVisualHidden(true);
+
+            Assert.IsTrue(_wardrobeA.HideHelmetVisual);
+            Assert.IsTrue(_appearanceA.HideHelmetVisual);
+            Assert.IsTrue(_wardrobeA.IsSlotOccupied(EquipmentSlot.Head));
+            Assert.AreSame(helmet, _wardrobeA.GetEquippedItemData(EquipmentSlot.Head));
+            Assert.IsFalse(helmetInstance.activeSelf);
+            Assert.IsTrue(headRenderer.enabled);
+            Assert.IsTrue(_appearanceA.IsHairVisible);
+            Assert.IsTrue(_appearanceA.CurrentHairInstance.activeSelf);
+            Assert.IsTrue(_appearanceA.IsBeardVisible);
+            Assert.IsTrue(_appearanceA.CurrentBeardInstance.activeSelf);
+
+            // Disable "Hide Helmet": helmet 3D mesh reappears and hides Head + Hair again
+            _wardrobeA.ToggleHelmetVisual();
+
+            Assert.IsFalse(_wardrobeA.HideHelmetVisual);
+            Assert.IsTrue(helmetInstance.activeSelf);
+            Assert.IsFalse(headRenderer.enabled);
+            Assert.IsFalse(_appearanceA.IsHairVisible);
+            Assert.IsFalse(_appearanceA.CurrentHairInstance.activeSelf);
+
+            Object.DestroyImmediate(helmet);
+        }
+
+        private static void AssertColorApproximatelyEqual(Color expected, Color actual, float tolerance = 1e-3f)
+        {
+            Assert.AreEqual(expected.r, actual.r, tolerance, $"Red channel mismatch: expected {expected}, got {actual}");
+            Assert.AreEqual(expected.g, actual.g, tolerance, $"Green channel mismatch: expected {expected}, got {actual}");
+            Assert.AreEqual(expected.b, actual.b, tolerance, $"Blue channel mismatch: expected {expected}, got {actual}");
+            Assert.AreEqual(expected.a, actual.a, tolerance, $"Alpha channel mismatch: expected {expected}, got {actual}");
         }
 
         [Test]

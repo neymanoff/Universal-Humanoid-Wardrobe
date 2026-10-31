@@ -69,6 +69,10 @@ namespace Neymanoff.HumanoidWardrobe
         [Tooltip("If enabled (e.g. for special classes like Berserker / Titan's Grip), allows equipping Two-Handed weapons in MainHand and OffHand simultaneously.")]
         [SerializeField] private bool allowDualTwoHanded = false;
 
+        [Header("Helmet Visibility")]
+        [Tooltip("When enabled, an item equipped in the Head slot remains equipped in the loadout, but its 3D visual model is hidden and its head/cosmetic hiding masks are bypassed.")]
+        [SerializeField] private bool hideHelmetVisual = false;
+
         private Animator _animator;
         private CharacterBodyScale _bodyScale;
         private readonly Dictionary<EquipmentSlot, EquippedItemInstance> _slotToInstance = new();
@@ -79,6 +83,7 @@ namespace Neymanoff.HumanoidWardrobe
         public event Action<EquipmentSlot, WardrobeItemSO> OnItemUnequipped;
         public event Action<WardrobeLoadout> OnLoadoutChanged;
         public event Action<EquipmentSlot, SocketAttachmentState> OnSocketStateChanged;
+        public event Action<bool> OnHelmetVisibilityChanged;
 
         // Legacy compatibility event
         public event Action<EquipmentSlot, GameObject> OnEquipmentChanged;
@@ -95,6 +100,55 @@ namespace Neymanoff.HumanoidWardrobe
         {
             get => allowDualTwoHanded;
             set => allowDualTwoHanded = value;
+        }
+
+        /// <summary>
+        /// When true, the item equipped in <see cref="EquipmentSlot.Head"/> remains equipped in the loadout,
+        /// but its 3D visual model is hidden and its <see cref="WardrobeItemSO.HiddenBodyParts"/>,
+        /// <see cref="WardrobeItemSO.ShrinkBlendShapes"/>, and <see cref="WardrobeItemSO.HiddenCosmetics"/> are bypassed.
+        /// </summary>
+        public bool HideHelmetVisual
+        {
+            get => hideHelmetVisual;
+            set => SetHelmetVisualHidden(value);
+        }
+
+        /// <summary>
+        /// Sets whether the equipped helmet in <see cref="EquipmentSlot.Head"/> is visually hidden while remaining equipped.
+        /// </summary>
+        public void SetHelmetVisualHidden(bool hidden)
+        {
+            if (hideHelmetVisual == hidden)
+            {
+                ApplyHelmetVisualVisibility();
+                return;
+            }
+
+            hideHelmetVisual = hidden;
+            ApplyHelmetVisualVisibility();
+            UpdateBodyMasksAndBlendshapes();
+            OnHelmetVisibilityChanged?.Invoke(hideHelmetVisual);
+        }
+
+        /// <summary>
+        /// Toggles the visual visibility of the equipped helmet in <see cref="EquipmentSlot.Head"/> and returns the new hidden state.
+        /// </summary>
+        public bool ToggleHelmetVisual()
+        {
+            SetHelmetVisualHidden(!hideHelmetVisual);
+            return hideHelmetVisual;
+        }
+
+        private void ApplyHelmetVisualVisibility()
+        {
+            if (_slotToInstance.TryGetValue(EquipmentSlot.Head, out var headInstance) && headInstance?.InstanceObject != null)
+            {
+                bool shouldBeActive = !hideHelmetVisual;
+                if (headInstance.InstanceObject.activeSelf != shouldBeActive)
+                {
+                    headInstance.InstanceObject.SetActive(shouldBeActive);
+                }
+            }
         }
 
         /// <summary>
@@ -251,6 +305,11 @@ namespace Neymanoff.HumanoidWardrobe
             }
             _equippedInstances.Add(itemInstance);
 
+            if (effectiveSlot == EquipmentSlot.Head || occupiedSlots.Contains(EquipmentSlot.Head))
+            {
+                ApplyHelmetVisualVisibility();
+            }
+
             UpdateBodyMasksAndBlendshapes();
 
             // Fire events
@@ -328,6 +387,11 @@ namespace Neymanoff.HumanoidWardrobe
             EquippedItemInstance instance = new(null, spawnedInstance, slot, new[] { slot });
             _slotToInstance[slot] = instance;
             _equippedInstances.Add(instance);
+
+            if (slot == EquipmentSlot.Head)
+            {
+                ApplyHelmetVisualVisibility();
+            }
 
             OnEquipmentChanged?.Invoke(slot, spawnedInstance);
             OnLoadoutChanged?.Invoke(GetCurrentLoadout());
@@ -616,7 +680,14 @@ namespace Neymanoff.HumanoidWardrobe
 
             for (int i = 0; i < _equippedInstances.Count; i++)
             {
-                WardrobeItemSO itemSO = _equippedInstances[i].ItemData;
+                EquippedItemInstance instance = _equippedInstances[i];
+                if (instance == null) continue;
+                if (hideHelmetVisual && instance.PrimarySlot == EquipmentSlot.Head)
+                {
+                    continue;
+                }
+
+                WardrobeItemSO itemSO = instance.ItemData;
                 if (itemSO == null) continue;
 
                 combinedHiddenMask |= itemSO.HiddenBodyParts;

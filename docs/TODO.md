@@ -264,7 +264,7 @@ Optional, game-agnostic cosmetic appearance component inside `com.neymanoff_unit
 - [x] **12.2. Per-Instance Hair & Beard Color Customization (`MaterialPropertyBlock`)**:
   - [x] Support linked (matching) or independent colors for Hair and Beard.
   - [x] Configure target shader color property names (`_BaseColor`, `_Color`, etc.) and optional renderer/material slot indices in the Inspector.
-  - [x] Apply colors via `MaterialPropertyBlock` so recoloring one character never mutates shared project `Material` assets or other character instances.
+  - [x] Apply colors via `MaterialPropertyBlock` and per-renderer cloned runtime materials so recoloring one character works with URP SRP Batcher while never mutating shared project `Material` assets or other character instances.
 - [x] **12.3. Declarative Multi-Source Visibility Suppression (`CosmeticVisibilityMask`)**:
   - [x] Add `[Flags] public enum CosmeticVisibilityMask` (`None`, `Hair`, `Beard`, `All`) and `hiddenCosmetics` field on `WardrobeItemSO`.
   - [x] Support multiple simultaneous visibility suppression sources (equipped items via `WardrobeManager` + external visual outfits/adapters via named source keys).
@@ -273,10 +273,16 @@ Optional, game-agnostic cosmetic appearance component inside `com.neymanoff_unit
   - [x] Provide `ICharacterAppearance` and optional `CharacterAppearance` MonoBehaviour component.
   - [x] Provide `CharacterAppearanceData` DTO (`hairOptionId`, `beardOptionId`, `hairColor`, `beardColor`, `linkColors`) with `ToJson` / `FromJson` and graceful, non-throwing handling of missing/unknown option IDs during restore.
 - [x] **12.5. Saved Stubs, Demo Showcase, NUnit Tests & Documentation**:
-  - [x] Create saved placeholder hair/beard prefabs (using Unity built-in primitive meshes and existing `Hair_Mat.mat`) and `CosmeticOptionSO` / `CosmeticCatalogSO` assets without adding external binary media to Git.
+  - [x] Create saved placeholder hair/beard prefabs (using Unity built-in primitive meshes and `Hair_Mat.mat` with `ClearBaseTextureOnTint`) and `CosmeticOptionSO` / `CosmeticCatalogSO` assets without adding external binary media to Git.
   - [x] Wire optional appearance controls in `WardrobeDemoScene` / `DemoInventoryUI` via Inspector references.
   - [x] Write comprehensive NUnit tests in `CharacterAppearanceTests.cs` covering selection, clearing, restore, missing IDs, color isolation across multiple characters, multi-source suppression, and equipment regression.
   - [x] Update technical docs (`docs/ARCHITECTURE.md`, `docs/INTEGRATION_GUIDE.md`) and write Russian beginner's guide (`docs/COSMETIC_APPEARANCE_GUIDE_RU.md`).
+- [x] **12.6. URP SRP Batcher Tinting Fix, Linear Color Space Test Fix & Show/Hide Helmet Option**:
+  - [x] Ensure `CharacterAppearance.ApplyColorToInstance` updates both `MaterialPropertyBlock` and per-renderer runtime `Material` clones (with automatic cleanup on destroy and zero mutation of project `.mat` assets) so URP SRP Batcher visibly tints hair and beard in real time.
+  - [x] Add `ClearBaseTextureOnTint` on `CosmeticOptionSO` and enable it on the 4 stub cosmetic options so solid color presets render vividly without adding extra `.mat` files.
+  - [x] Fix Linear Color Space floating-point precision assertion in `CharacterAppearanceTests`.
+  - [x] Add `HideHelmetVisual` (`SetHelmetVisualHidden(bool)`, `ToggleHelmetVisual()`, `OnHelmetVisibilityChanged`) on `WardrobeManager` and `ICharacterAppearance` / `CharacterAppearance` so players can keep a helmet equipped in `EquipmentSlot.Head` while hiding its 3D model and keeping their head, hairstyle, and beard visible.
+  - [x] Add saved `ToggleHelmetButton` ("Hide Helmet" / "Show Helmet") to `WardrobeDemoScene.unity` and `DemoInventoryUI`.
 
 
 

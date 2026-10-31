@@ -73,6 +73,23 @@ namespace Neymanoff.HumanoidWardrobe
         CosmeticVisibilityMask ActiveVisibilityRestrictions { get; }
 
         /// <summary>
+        /// When true, an item equipped in <see cref="EquipmentSlot.Head"/> remains equipped in the loadout,
+        /// but its 3D visual model is hidden and its head/cosmetic hiding restrictions are bypassed so the character's
+        /// head, hairstyle, and beard remain visible.
+        /// </summary>
+        bool HideHelmetVisual { get; set; }
+
+        /// <summary>
+        /// Sets whether the equipped helmet in <see cref="EquipmentSlot.Head"/> is visually hidden while remaining equipped.
+        /// </summary>
+        void SetHelmetVisualHidden(bool hidden);
+
+        /// <summary>
+        /// Toggles the visual visibility of the equipped helmet in <see cref="EquipmentSlot.Head"/> and returns the new hidden state.
+        /// </summary>
+        bool ToggleHelmetVisual();
+
+        /// <summary>
         /// Fired when the active hairstyle or beard option changes.
         /// Parameters: (Category, SelectedOptionOrNull, SpawnedInstanceOrNull).
         /// </summary>

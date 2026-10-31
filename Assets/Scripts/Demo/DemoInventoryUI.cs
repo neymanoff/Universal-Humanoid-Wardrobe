@@ -110,6 +110,14 @@ namespace Neymanoff.HumanoidWardrobe.UI
         [SerializeField]
         private Toggle linkColorsToggle;
 
+        [Tooltip("Button to toggle helmet visual visibility while keeping the helmet equipped in the Head slot.")]
+        [SerializeField]
+        private Button toggleHelmetVisibilityButton;
+
+        [Tooltip("Optional text element on the helmet visibility toggle button.")]
+        [SerializeField]
+        private TextMeshProUGUI toggleHelmetVisibilityText;
+
         private readonly Dictionary<WardrobeItemSO, GameObject> _itemButtonMap = new();
         private int _currentHairColorPresetIndex;
         private int _currentBeardColorPresetIndex;
@@ -200,6 +208,11 @@ namespace Neymanoff.HumanoidWardrobe.UI
             if (cycleBeardButton != null) cycleBeardButton.onClick.AddListener(CycleBeard);
             if (cycleHairColorButton != null) cycleHairColorButton.onClick.AddListener(CycleHairColor);
             if (cycleBeardColorButton != null) cycleBeardColorButton.onClick.AddListener(CycleBeardColor);
+            if (toggleHelmetVisibilityButton != null)
+            {
+                toggleHelmetVisibilityButton.onClick.AddListener(ToggleHelmetVisibility);
+                UpdateHelmetButtonText();
+            }
             if (linkColorsToggle != null)
             {
                 if (characterAppearance != null)
@@ -609,6 +622,32 @@ namespace Neymanoff.HumanoidWardrobe.UI
             {
                 characterAppearance.LinkHairAndBeardColor = link;
                 SetFeedback($"Link Hair & Beard Colors: {(link ? "ON" : "OFF")}");
+            }
+        }
+
+        /// <summary>
+        /// Toggles whether the equipped helmet in <see cref="EquipmentSlot.Head"/> is visually hidden
+        /// while remaining equipped (so the player's head, hairstyle, and beard stay visible).
+        /// </summary>
+        public void ToggleHelmetVisibility()
+        {
+            if (wardrobeManager == null)
+            {
+                return;
+            }
+
+            bool hidden = wardrobeManager.ToggleHelmetVisual();
+            UpdateHelmetButtonText();
+            SetFeedback(hidden ? "Helmet Visual: Hidden (Head & Hair Visible)" : "Helmet Visual: Shown");
+        }
+
+        private void UpdateHelmetButtonText()
+        {
+            if (toggleHelmetVisibilityText != null && wardrobeManager != null)
+            {
+                toggleHelmetVisibilityText.text = wardrobeManager.HideHelmetVisual
+                    ? "Show Helmet"
+                    : "Hide Helmet";
             }
         }
 
